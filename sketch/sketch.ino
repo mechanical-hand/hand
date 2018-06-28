@@ -3,19 +3,34 @@
 #include "command.h"
 #include "command_processor.h"
 
+// Используемый последовательный порт
 #define SERIAL Serial
 
 Servo servo0, servo1;
 
+/**
+ * Массив сервомашинок
+*/
 hand::servo servos[] = {
     hand::servo(servo0, 3, 0),
     hand::servo(servo1, 5, 0)
 };
 
+/**
+ * Количество сервомашинок
+ */
 const size_t servo_count = 2;
 
+// Макрос для определения обработчиков команд
 #define COMMAND_HANDLER(name) bool name (Stream& m_input, Print& m_reply)
 
+/**
+ * @brief Обработчик команды чтения
+ * 
+ * Документацию к командам см. в command.h.
+ * При обращении к несуществующей сервомашинке печатает в поток выходных данных строку "Invalid servo number N", где N - номер сервомашинки.
+ * Иначе печатает "Success: N", где N - положение сервомашинки
+ */
 COMMAND_HANDLER(read_handler)
 {
     int servo_number = m_input.parseInt();
@@ -32,10 +47,18 @@ COMMAND_HANDLER(read_handler)
     return true;
 }
 
+
+/**
+ * @brief Обработчик команды записи
+ * 
+ * Документацию к командам см. в command.h.
+ * При обращении к несуществующей сервомашинке печатает в поток выходных данных строку "Invalid servo number N", где N - номер сервомашинки.
+ * Иначе печатает "Success"
+ */
 COMMAND_HANDLER(write_handler)
 {
-    int servo_number = m_input.parseInt();;
-    int position = m_input.parseInt();;
+    int servo_number = m_input.parseInt();
+    int position = m_input.parseInt();
 
     if(servo_number >= servo_count)
     {
@@ -50,19 +73,30 @@ COMMAND_HANDLER(write_handler)
     return true;
 }
 
+/**
+ * @brief Обработчик пинга
+ *
+ * Печатает "Pong" в поток вывода
+ */
 COMMAND_HANDLER(ping_handler)
 {
     m_reply.println("Pong");
     return true;
 }
 
+/**
+ * @brief Обработчик команды мультизаписи
+ *
+ * При обращении к несуществующей машинки прерывает выполнение команды и печатает "Invalid servo number N" в поток вывода.
+ * При успешном выполнении печатает "Success"
+ */
 COMMAND_HANDLER(multi_write_handler)
 {
     int servos_c = m_input.parseInt();
     for(int i = 0; i < servos_c; ++i)
     {
-        int servo_number = m_input.parseInt();;
-        int position = m_input.parseInt();;
+        int servo_number = m_input.parseInt();
+        int position = m_input.parseInt();
 
         if(servo_number >= servo_count)
         {
@@ -78,7 +112,9 @@ COMMAND_HANDLER(multi_write_handler)
     return true;
 }
 
-
+/**
+ * Массив обработчиков команд
+ */
 hand::command_handler handlers[] = {
     NULL,
     &read_handler,
@@ -96,6 +132,9 @@ void setup()
     SERIAL.println("Initialized");
 }
 
+/**
+ * Обработчик поступающих команд
+ */
 hand::command_processor processor(handlers, handlers_count, SERIAL, SERIAL);
 
 void loop()
