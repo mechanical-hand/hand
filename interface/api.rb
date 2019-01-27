@@ -9,9 +9,9 @@ module HandAPI
     end
 
     # Открывает последовательный порт и вызывает блок, затем закрывает файл
-    # 
+    #
     # Этот метод устанавливает переменную @file
-    # @param block [Proc] Выполняемый блок 
+    # @param block [Proc] Выполняемый блок
     def open(&block)
       File.open @dev, "w+" do |f|
         @file = f
@@ -44,7 +44,7 @@ module HandAPI
       end
       cmd
     end
-    
+
     # Обертка над #write.
     #
     # Выводит команду и ответ в консоль
@@ -53,7 +53,7 @@ module HandAPI
     # @returns Значение, переданное контроллером (например, в ответ на команду чтения) или nil в случае его отсутствия
     def execute(cmd)
       puts "> #{cmd}"
-      cmd = write cmd
+      cmd = write(cmd).sub("\n", "")
       puts "< #{cmd}"
       raise cmd unless cmd.start_with?("Success")|| cmd.start_with?("Pong")
       if cmd.match(/Success: \d+/)

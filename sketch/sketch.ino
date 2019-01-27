@@ -4,7 +4,7 @@
 #include "command_processor.h"
 
 // Используемый последовательный порт
-#define SERIAL Serial
+#define SERIAL Serial1
 
 // Список машинок
 hand::servo servos[] = {
@@ -124,6 +124,7 @@ COMMAND_HANDLER(rotate_handler)
         servos[0].write(angle);
 
     m_reply.println("Success");
+    return true;
 }
 
 /**
@@ -145,6 +146,7 @@ COMMAND_HANDLER(extend_handler)
     servos[4].writeDegrees(servos[2].getAngle() - joint_2);
 
     m_reply.println("Success");
+    return true;
 }
 
 /**
@@ -159,18 +161,19 @@ COMMAND_HANDLER(capture_handler)
     servos[5].writeDegrees(joint_1);
 
     m_reply.println("Success");
+    return true;
 }
 
 
 hand::command_handler handlers[] = {
-    NULL,
-    &read_handler,
-    &write_handler,
-    &ping_handler,
-    &multi_write_handler,
-    &rotate_handler,
-    &extend_handler,
-    &capture_handler
+    NULL, //0
+    &read_handler,//1
+    &write_handler,//2
+    &ping_handler,//3
+    &multi_write_handler,//4
+    &rotate_handler,//5
+    &extend_handler,//6
+    &capture_handler//7
 };
 
 const size_t handlers_count = 8;
