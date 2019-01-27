@@ -6,8 +6,8 @@ namespace hand
     class servo
     {
     public:
-        servo(Servo s, int pin, int initial) :
-            m_servo(s)
+        servo(int pin, int initial, int angle) :
+            m_angle(angle)
         {
             m_servo.attach(pin);
             m_servo.write(initial);
@@ -22,7 +22,38 @@ namespace hand
         {
             return m_servo.read();
         }
+
+        bool writeDegrees(int degrees)
+        {
+            int half_angle = getHalfAngle();
+
+            if(degrees > half_angle) return writeDegrees(half_angle);
+
+            if(degrees < - half_angle) return writeDegrees(-half_angle);
+
+            int pwm = map(degrees, -half_angle, half_angle, 0, 255);
+            write(pwm);
+            return true;
+        }
+
+        int readDegrees()
+        {
+            int half_angle = getHalfAngle();
+            int pwm = read();
+            return map(pwm, 0, 255, -half_angle, half_angle);
+        }
+
+        int getAngle()
+        {
+            return m_angle;
+        }
+
+        int getHalfAngle()
+        {
+            return m_angle/2;
+        }
     private:
         Servo m_servo;
+        int m_angle;
     };
 }
