@@ -6,6 +6,7 @@
 // Используемый последовательный порт
 #define SERIAL Serial
 
+// Список машинок
 hand::servo servos[] = {
     hand::servo(PA0, 128, 270), // Поворот
     hand::servo(PA1, 128, 270), // 1 сустав
@@ -109,6 +110,9 @@ COMMAND_HANDLER(multi_write_handler)
 }
 
 // Высокоуровневые команды
+/**
+ * @brief Обработчик команды вращения
+ */
 COMMAND_HANDLER(rotate_handler)
 {
     int angle = m_input.parseInt();
@@ -122,6 +126,9 @@ COMMAND_HANDLER(rotate_handler)
     m_reply.println("Success");
 }
 
+/**
+ * @brief Обработчик команды вытягивания руки
+ */
 COMMAND_HANDLER(extend_handler)
 {
     int delta = m_input.parseInt();
@@ -140,6 +147,9 @@ COMMAND_HANDLER(extend_handler)
     m_reply.println("Success");
 }
 
+/**
+ * @brief Обработчик команды сжатия клешни
+ */
 COMMAND_HANDLER(capture_handler)
 {
     int delta = m_input.parseInt();
