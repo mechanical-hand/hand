@@ -3,6 +3,9 @@
 
 namespace hand
 {
+    /**
+     * @brief Класс-обертка над классом управления сервомашинками
+     */
     class servo
     {
     public:
@@ -13,11 +16,19 @@ namespace hand
             m_servo.write(initial);
         }
 
+        /**
+         * @brief Установка положения сервомашинки
+         * @param value Желаемое значение
+         */
         void write(int value)
         {
             m_servo.write(value);
         }
 
+        /**
+         * @brief Чтение текущего положения сервомашинки
+         * @returns Положение сервомашинки
+         */
         int read()
         {
             return m_servo.read();

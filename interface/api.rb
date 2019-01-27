@@ -1,9 +1,17 @@
 module HandAPI
+  # Абстракция для коммуникации с контроллером
   class Serial
+    # Конструктор
+    #
+    # @param dev [String] Путь к файлу устройства (например, /dev/ttyUSB0)
     def initialize(dev)
       @dev = dev
     end
 
+    # Открывает последовательный порт и вызывает блок, затем закрывает файл
+    # 
+    # Этот метод устанавливает переменную @file
+    # @param block [Proc] Выполняемый блок 
     def open(&block)
       File.open @dev, "w+" do |f|
         @file = f
@@ -11,6 +19,10 @@ module HandAPI
       end
     end
 
+    # Отправляет команду в последовательный порт
+    #
+    # @param str [String] Команда для отправки (например, "4 2 0 60 1 100")
+    # @returns Ответ контроллера
     def write(str)
       @file.write str
       @file.flush
@@ -32,7 +44,13 @@ module HandAPI
       end
       cmd
     end
-
+    
+    # Обертка над #write.
+    #
+    # Выводит команду и ответ в консоль
+    # @param cmd [String] Команда
+    # @throws RuntimeError с текстом ошибки, если контроллер сообщил об ошибке
+    # @returns Значение, переданное контроллером (например, в ответ на команду чтения) или nil в случае его отсутствия
     def execute(cmd)
       puts "> #{cmd}"
       cmd = write cmd
