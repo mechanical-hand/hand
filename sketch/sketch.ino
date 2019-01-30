@@ -5,7 +5,8 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
-#define SERVO_EPSILON 10
+#define SERVO_EPSILON 3
+#define EXTEND_SPEED 50
 
 #ifndef PA0
   #define PA0 3
@@ -93,6 +94,53 @@ COMMAND_HANDLER(ping_handler)
     return true;
 }
 
+template<int N>
+bool multi_write_helper(int indices[], int positions[], int count, int speed, Stream& m_input, Print& m_reply)
+{
+    long timeout = 1000000/speed * SERVO_EPSILON;
+    long last_micros = micros();
+
+    bool completed = false;
+
+    int directions[N];
+
+    for(int i = 0; i < count && i < N; i++)
+    {
+        if(servos[indices[i]].readDegrees() <= positions[i])
+            directions[i] = 1;
+        else
+            directions[i] = -1;
+    }
+
+    while(!completed)
+    {
+        if(micros() < last_micros + timeout) continue;
+
+        last_micros = micros();
+
+        completed = true;
+        for(int i = 0; i < count && i < N; i++)
+        {
+            int actual_value = servos[indices[i]].readDegrees();
+
+            if(actual_value == positions[i]) continue;
+
+            if((positions[i] - actual_value)*directions[i] <= SERVO_EPSILON)
+            {
+                servos[indices[i]].writeDegrees(positions[i]);
+            }
+            else
+            {
+                completed = false;
+                servos[indices[i]].writeDegrees(actual_value + SERVO_EPSILON * directions[i]);
+            }
+        }
+    }
+    m_reply.println("Success");
+
+    return true;
+}
+
 /**
  * @brief Обработчик команды мультизаписи
  *
@@ -102,7 +150,7 @@ COMMAND_HANDLER(ping_handler)
 template<int N>
 COMMAND_HANDLER(multi_write_handler)
 {
-    int speed = m_input.parseInt() / SERVO_EPSILON;
+    int speed = m_input.parseInt();
     int servos_c = m_input.parseInt();
     int indices[N] = {0};
     int positions[N] = {0};
@@ -127,48 +175,7 @@ COMMAND_HANDLER(multi_write_handler)
         positions[i] = servos[indices[i]].clamp(m_input.parseInt());
     }
 
-    int timeout = 1000000/speed;
-    long last_micros = micros();
-
-    bool completed = false;
-
-    int directions[N];
-
-    for(int i = 0; i < servos_c && i < N; i++)
-    {
-        if(servos[indices[i]].readDegrees() <= positions[i])
-            directions[i] = 1;
-        else
-            directions[i] = -1;
-    }
-
-    while(!completed)
-    {
-        if(micros() < last_micros + timeout) continue;
-
-        last_micros = micros();
-
-        completed = true;
-        for(int i = 0; i < servos_c && i < N; i++)
-        {
-            int actual_value = servos[indices[i]].read();
-
-            if(actual_value == positions[i]) continue;
-
-            if((positions[i] - actual_value)*directions[i] <= SERVO_EPSILON)
-            {
-                servos[indices[i]].write(positions[i]);
-            }
-            else
-            {
-                completed = false;
-                servos[indices[i]].write(actual_value + SERVO_EPSILON * directions[i]);
-            }
-        }
-    }
-    m_reply.println("Success");
-
-    return true;
+    return multi_write_helper<N>(indices, positions, servos_c, speed, m_input, m_reply);
 }
 
 // Высокоуровневые команды
@@ -202,13 +209,20 @@ COMMAND_HANDLER(extend_handler)
     joint_1 += delta;
     joint_2 -= delta;
 
-    servos[1].writeDegrees(joint_1);
-    servos[2].writeDegrees(servos[2].getAngle() - joint_1);
-    servos[3].writeDegrees(joint_2);
-    servos[4].writeDegrees(servos[2].getAngle() - joint_2);
+    //servos[1].writeDegrees(joint_1);
+    //servos[2].writeDegrees(servos[2].getAngle() - joint_1);
+    //servos[3].writeDegrees(joint_2);
+    //servos[4].writeDegrees(servos[2].getAngle() - joint_2);
 
-    m_reply.println("Success");
-    return true;
+    int indices[] = {1, 2, 3, 4};
+    int positions[] = {
+        servos[1].clamp(joint_1),
+        servos[2].clamp(servos[2].getAngle() - joint_1),
+        servos[3].clamp(joint_2),
+        servos[4].clamp(servos[4].getAngle() - joint_2)
+    };
+
+    return multi_write_helper<4>(indices, positions, 4, EXTEND_SPEED , m_input, m_reply);
 }
 
 /**
