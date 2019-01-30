@@ -8,10 +8,10 @@ puts "Hand CLI"
 s.open do
   while true
     putc ">"
-    
+
     # Получаем команду
     cmd = gets.split(" ")
-    
+
     # Выходим из цикла, если команда - exit
     break if cmd.first == "exit"
     command = case cmd.first
@@ -24,7 +24,8 @@ s.open do
       "3"
     when "mw"
       # Команда multiwrite
-      "4 #{cmd.size - 1} #{cmd[1..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
+      puts "! Warning: too many servos (max 8)" if cmd.size > 10
+      "4 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
     when "rotate"
       "5 #{cmd[1]} 0"
     when "rotate_r"
@@ -33,6 +34,12 @@ s.open do
       "6 #{cmd[1]}"
     when "capture", "squeeze"
       "7 #{cmd[1]}"
+    when "mw2"
+      puts "! Warning: too many servos (max 2)" if cmd.size > 4
+      "8 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
+    when "mw4"
+      puts "! Warning: too many servos (max 4)" if cmd.size > 6
+      "9 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
     else
       puts "Unknown command"
       next

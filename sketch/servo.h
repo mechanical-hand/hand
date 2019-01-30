@@ -10,10 +10,9 @@ namespace hand
     {
     public:
         servo(int pin, int initial, int angle) :
-            m_angle(angle)
+            m_angle(angle), m_initial(initial), m_pin(pin)
         {
-            m_servo.attach(pin);
-            m_servo.write(initial);
+            
         }
 
         /**
@@ -23,6 +22,12 @@ namespace hand
         void write(int value)
         {
             m_servo.write(value);
+        }
+
+        void init()
+        {
+            m_servo.attach(m_pin);
+            m_servo.write(m_initial);
         }
 
         /**
@@ -37,12 +42,7 @@ namespace hand
         bool writeDegrees(int degrees)
         {
             int half_angle = getHalfAngle();
-
-            if(degrees > half_angle) return writeDegrees(half_angle);
-
-            if(degrees < - half_angle) return writeDegrees(-half_angle);
-
-            int pwm = map(degrees, -half_angle, half_angle, 0, 255);
+            int pwm = map(clamp(degrees), -half_angle, half_angle, 0, 180);
             write(pwm);
             return true;
         }
@@ -51,7 +51,7 @@ namespace hand
         {
             int half_angle = getHalfAngle();
             int pwm = read();
-            return map(pwm, 0, 255, -half_angle, half_angle);
+            return map(pwm, 0, 180, -half_angle, half_angle);
         }
 
         int getAngle()
@@ -63,8 +63,16 @@ namespace hand
         {
             return m_angle/2;
         }
+
+        int clamp(int value)
+        {
+            int half_angle = getHalfAngle();
+            if(value > half_angle) return half_angle;
+            if(value < -half_angle) return -half_angle;
+            return value;
+        }
     private:
         Servo m_servo;
-        int m_angle;
+        int m_angle, m_initial, m_pin;
     };
 }

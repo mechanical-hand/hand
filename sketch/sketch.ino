@@ -5,15 +5,27 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
+#define SERVO_EPSILON 10
+
+#ifndef PA0
+  #define PA0 3
+  #define PA1 5
+  #define PA2 6
+  #define PA3 9
+  #define PA6 10
+  #define PA7 11
+  #undef SERIAL
+  #define SERIAL Serial
+#endif
 
 // Список машинок
 hand::servo servos[] = {
-    hand::servo(PA0, 128, 270), // Поворот
-    hand::servo(PA1, 128, 270), // 1 сустав
-    hand::servo(PA2, 128, 270), // 1 сустав
-    hand::servo(PA3, 128, 270), // 2 сустав
-    hand::servo(PA6, 128, 270), // 2 сустав
-    hand::servo(PA7, 128, 270)  // клешня
+    hand::servo(PA0, 90, 270), // Поворот
+    hand::servo(PA1, 90, 270), // 1 сустав
+    hand::servo(PA2, 90, 270), // 1 сустав
+    hand::servo(PA3, 90, 270), // 2 сустав
+    hand::servo(PA6, 90, 270), // 2 сустав
+    hand::servo(PA7, 90, 270)  // клешня
 };
 
 const size_t servo_count = 6;
@@ -87,22 +99,72 @@ COMMAND_HANDLER(ping_handler)
  * При обращении к несуществующей машинки прерывает выполнение команды и печатает "Invalid servo number N" в поток вывода.
  * При успешном выполнении печатает "Success"
  */
+template<int N>
 COMMAND_HANDLER(multi_write_handler)
 {
+    int speed = m_input.parseInt() / SERVO_EPSILON;
     int servos_c = m_input.parseInt();
-    for(int i = 0; i < servos_c; ++i)
-    {
-        int servo_number = m_input.parseInt();
-        int position = m_input.parseInt();
+    int indices[N] = {0};
+    int positions[N] = {0};
 
-        if(servo_number >= servo_count)
+    char invalid_servo_message[] = {
+        /*0*/ 'I', 'n', 'v', 'a', 'l', 'i', 'd', ' ',
+        /*8*/ 's', 'e', 'r', 'v', 'o', ' ',
+        /*14*/'i', 'n', 'd', 'e', 'x', ' ',
+        /*20*/' ', 0, 0, 0, 0
+    };
+    const size_t servo_number_index = 20;
+
+    for(int i = 0; i < servos_c && i < N; i++)
+    {
+        indices[i] = m_input.parseInt();
+        if(indices[i] >= servo_count)
         {
-            m_reply.print("Invalid servo number ");
-            m_reply.println(servo_number);
+            itoa(indices[i] % 1000, &(invalid_servo_message[20]), 10);
+            m_reply.println(invalid_servo_message);
             return false;
         }
+        positions[i] = servos[indices[i]].clamp(m_input.parseInt());
+    }
 
-        servos[servo_number].write(position);
+    int timeout = 1000000/speed;
+    long last_micros = micros();
+
+    bool completed = false;
+
+    int directions[N];
+
+    for(int i = 0; i < servos_c && i < N; i++)
+    {
+        if(servos[indices[i]].readDegrees() <= positions[i])
+            directions[i] = 1;
+        else
+            directions[i] = -1;
+    }
+
+    while(!completed)
+    {
+        if(micros() < last_micros + timeout) continue;
+
+        last_micros = micros();
+
+        completed = true;
+        for(int i = 0; i < servos_c && i < N; i++)
+        {
+            int actual_value = servos[indices[i]].read();
+
+            if(actual_value == positions[i]) continue;
+
+            if((positions[i] - actual_value)*directions[i] <= SERVO_EPSILON)
+            {
+                servos[indices[i]].write(positions[i]);
+            }
+            else
+            {
+                completed = false;
+                servos[indices[i]].write(actual_value + SERVO_EPSILON * directions[i]);
+            }
+        }
     }
     m_reply.println("Success");
 
@@ -170,18 +232,22 @@ hand::command_handler handlers[] = {
     &read_handler,//1
     &write_handler,//2
     &ping_handler,//3
-    &multi_write_handler,//4
+    &multi_write_handler<8>,//4
     &rotate_handler,//5
     &extend_handler,//6
-    &capture_handler//7
+    &capture_handler,//7
+    &multi_write_handler<2>,
+    &multi_write_handler<4>
 };
 
-const size_t handlers_count = 8;
+const size_t handlers_count = 10;
 
 
 void setup()
 {
     SERIAL.begin(9600);
+    for(int i = 0; i < servo_count; i++) servos[i].init();
+
     SERIAL.println("Initialized");
 }
 
