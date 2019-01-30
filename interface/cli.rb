@@ -2,56 +2,175 @@
 # Интерактивный консольный интерфейс для отправки команд контроллеру
 require "./api"
 
-# Порт можно передать аргументом или через переменную среды SERIAL
-s = HandAPI::Serial.new(ARGV.shift || ENV["SERIAL"])
-puts "Hand CLI"
-s.open do
-  while true
-    putc ">"
-
-    # Получаем команду
-    cmd = gets.split(" ")
-
-    # Выходим из цикла, если команда - exit
-    break if cmd.first == "exit"
-    command = case cmd.first
-    # Если команда - read, формируем команду чтения. Аналогично для остальных команд
-    when "read"
-      "1 #{cmd[1]}"
-    when "write"
-      "2 #{cmd[1]} #{cmd[2]}"
-    when "ping"
-      "3"
-    when "mw"
-      # Команда multiwrite
-      puts "! Warning: too many servos (max 8)" if cmd.size > 10
-      "4 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
-    when "rotate"
-      "5 #{cmd[1]} 0"
-    when "rotate_r"
-      "5 #{cmd[1]} 1"
-    when "extend"
-      "6 #{cmd[1]}"
-    when "capture", "squeeze"
-      "7 #{cmd[1]}"
-    when "mw2"
-      puts "! Warning: too many servos (max 2)" if cmd.size > 4
-      "8 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
-    when "mw4"
-      puts "! Warning: too many servos (max 4)" if cmd.size > 6
-      "9 #{cmd[1]} #{cmd.size - 2} #{cmd[2..-1].map{ |x| x.split("=").join(" ")}.join(" ")}"
-    else
-      puts "Unknown command"
-      next
+module HandAPI
+  class Command
+    def initialize(&block)
+      @block = block
     end
 
-    begin
-      # Выполняем команду
-      puts s.execute command
-    rescue => e
-      # Выводим исключение
-      puts "Exception : #{e.inspect}"
+    def help(help)
+      @help = help
+      self
     end
 
+    def brief(b)
+      @brief = b
+      self
+    end
+
+    def help!
+      @help || ""
+    end
+
+    def brief!
+      @brief || ""
+    end
+
+    def call(serial, cli, cmd)
+      data = @block.call(cli, cmd)
+      serial.execute data unless data.nil?
+    end
   end
+
+  class CLI
+
+
+    def initialize(&block)
+      @commands = {}
+      block.call self
+
+    end
+
+    def add_command(name, &cmd)
+      puts "! Warning: command #{name} already exists" if @commands.has_key? name
+      command = Command.new &cmd
+      @commands[name] = command
+      command
+    end
+
+    def help(cmd)
+      if cmd.nil?
+        "Help: \n\n" + @commands.map do |k, v|
+          "#{k} - #{v.brief!}"
+        end.join("\n") + "\n\n use 'help <cmd>' to get help for <cmd>"
+      else
+        if @commands.has_key? cmd
+          @commands[key].help!
+        else
+          "! Error: No command '#{cmd}'"
+        end
+      end
+    end
+
+    def help!(cmd)
+      puts help(cmd)
+    end
+
+    def loop(serial)
+      while true
+        begin
+          putc ">"
+          cmd = gets
+
+          cmd_name = cmd.split(" ").first
+
+          if @commands.has_key? cmd_name
+            puts @commands[cmd_name].call(serial, self, cmd)
+          else
+            puts "! Error: Unknown command"
+          end
+        rescue => e
+          puts "! Exception"
+          puts e.inspect
+          puts e.backtrace.join("\n")
+        end
+      end
+    end
+  end
+end
+
+# Порт можно передать аргументом или через переменную среды SERIAL
+serial = HandAPI::Serial.new(ARGV.shift || ENV["SERIAL"])
+puts "Hand CLI"
+
+cli = HandAPI::CLI.new do |c|
+  c.add_command "exit" do |cli, cmd|
+    exit 0
+  end.brief("exits immediately").help("exit - exit from command loop immediately")
+
+  c.add_command "help" do |cli, cmd|
+    arg = cmd.split(" ")[1]
+    cli.help! arg
+    nil
+  end.brief("prints help").help("help - prints this help\nhelp <cmd> - prints help for <cmd>")
+
+  c.add_command "read" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    "1 #{args[1].to_i}"
+  end.brief("reads servo data").help("read <i> - reads value from servo number <i>")
+
+  c.add_command "write" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required arguments" if args.size < 3
+    "2 #{args[1].to_i} #{args[2].to_i}"
+  end.brief("writes servo data").help("write <i> <value> - assigns <value> to servo number <i>")
+
+  c.add_command "ping" do |cli, cmd|
+    time = Time.now
+    puts serial.execute "3"
+    puts "> Latency: #{((Time.now - time).to_f * 1000).to_i} ms"
+  end.brief("sends ping to the controller").help("ping - sends ping and prints latency")
+
+  c.add_command "mw" do |cli, cmd|
+    args = cmd.split(" ")
+    speed = args[1].to_i
+    count = args.size - 2
+    servos = args[2..-1].map{ |x| x.sub("=", " ")}
+    "4 #{speed} #{count.to_i} #{servos.join(" ")}"
+  end.brief("assigns values to multiple servos simultaneously").help("mw <speed> <i>=<value> ... - assigns values to multiple servos (up to 8) simultaneously")
+
+  c.add_command "rotate" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    "5 #{args[1].to_i} 0"
+  end.brief("rotates the hand")
+
+  c.add_command "rotate_r" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    "5 #{args[1].to_i} 1"
+  end.brief("rotates the hand relatively")
+
+  c.add_command "extend" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    "6 #{args[1].to_i}"
+  end.brief("extends the hand relatively")
+
+  c.add_command "capture" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    "7 #{args[1].to_i}"
+  end.brief("sets the state of claw")
+
+  c.add_command "mw2" do |cli, cmd|
+    args = cmd.split(" ")
+    speed = args[1].to_i
+    count = args.size - 2
+    servos = args[2..-1].map{ |x| x.sub("=", " ")}
+    "8 #{speed} #{count.to_i} #{servos.join(" ")}"
+  end.brief("assigns values to max 2 servos simultaneously").help("mw2 <speed> <i>=<value> ... - assigns values to multiple servos (up to 2) simultaneously")
+
+  c.add_command "mw4" do |cli, cmd|
+    args = cmd.split(" ")
+    speed = args[1].to_i
+    count = args.size - 2
+    servos = args[2..-1].map{ |x| x.sub("=", " ")}
+    "9 #{speed} #{count.to_i} #{servos.join(" ")}"
+  end.brief("assigns values to max 4 servos simultaneously").help("mw <speed> <i>=<value> ... - assigns values to multiple servos (up to 4) simultaneously")
+end
+
+serial.open do
+  cli.loop(serial)
 end
