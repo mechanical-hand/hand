@@ -10,10 +10,20 @@ namespace hand
     {
     public:
         servo(int pin, int initial, int angle) :
-            m_angle(angle), m_initial(initial), m_pin(pin)
-        {
-            
-        }
+            m_angle(angle),
+            m_pin(pin),
+            m_initial(initial),
+            m_min(0),
+            m_max(angle)
+        {}
+
+        servo(int pin, int initial, int angle, int min, int max) :
+            m_angle(angle),
+            m_initial(initial),
+            m_pin(pin),
+            m_min(min),
+            m_max(max)
+        {}
 
         /**
          * @brief Установка положения сервомашинки
@@ -73,6 +83,6 @@ namespace hand
         }
     private:
         Servo m_servo;
-        int m_angle, m_initial, m_pin;
+        int m_angle, m_initial, m_pin, m_min, m_max;
     };
 }
