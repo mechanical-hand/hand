@@ -1,5 +1,5 @@
 #pragma once
-
+#define NO_PIN 0
 
 namespace hand
 {
@@ -31,11 +31,13 @@ namespace hand
          */
         void write(int value)
         {
+            if(m_pin == NO_PIN) return;
             m_servo.write(value);
         }
 
         void init()
         {
+            if(m_pin == NO_PIN) return;
             m_servo.attach(m_pin);
             m_servo.write(m_initial);
         }
@@ -46,6 +48,7 @@ namespace hand
          */
         int read()
         {
+            if(m_pin == NO_PIN) return 0;
             return m_servo.read();
         }
 
