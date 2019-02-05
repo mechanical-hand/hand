@@ -13,8 +13,8 @@ namespace hand
             m_angle(angle),
             m_pin(pin),
             m_initial(initial),
-            m_min(0),
-            m_max(angle)
+            m_min(-angle/2),
+            m_max(angle/2)
         {}
 
         servo(int pin, int initial, int angle, int min, int max) :
@@ -74,12 +74,24 @@ namespace hand
             return m_angle/2;
         }
 
+        int clamp(int value, int min, int max)
+        {
+            if(value > max) return max;
+            if(value < min) return min;
+            return value;
+        }
+
+        int clamp(int value, bool use_restrictions)
+        {
+            int half = getHalfAngle();
+            int min = (use_restrictions ? -half : m_min);
+            int max = (use_restrictions ? half : m_max);
+            return clamp(value, min, max);
+        }
+
         int clamp(int value)
         {
-            int half_angle = getHalfAngle();
-            if(value > half_angle) return half_angle;
-            if(value < -half_angle) return -half_angle;
-            return value;
+            return clamp(value, true);
         }
     private:
         Servo m_servo;
