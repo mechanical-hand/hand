@@ -259,6 +259,7 @@ const size_t handlers_count = 10;
 
 void setup()
 {
+    SERIAL.setTimeout(50);
     SERIAL.begin(9600);
     for(int i = 0; i < servo_count; i++) servos[i].init();
 
