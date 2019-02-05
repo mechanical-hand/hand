@@ -21,7 +21,8 @@
   #define PA7 11
 
   // Меняем пин на любой свободный цифровой (для переключателя)
-  #define PB10 13
+  #define PB10 12
+  #define PB11 13
 
   // Меняем Serial1 на Serial
   #undef SERIAL
@@ -29,4 +30,8 @@
 
   // Меняем режим для аналоговых пинов
   #define INPUT_ANALOG INPUT
+
+  #define ANALOG_MAX 1023
+#else
+  #define ANALOG_MAX 4095
 #endif
