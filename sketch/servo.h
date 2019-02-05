@@ -96,6 +96,10 @@ namespace hand
         {
             return clamp(value, true);
         }
+
+        int getMin(){ return m_min; }
+        int getMax(){ return m_max; }
+        int getPin(){ return m_pin; }
     private:
         Servo m_servo;
         int m_angle, m_initial, m_pin, m_min, m_max;
