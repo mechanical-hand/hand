@@ -34,7 +34,7 @@ module HandAPI
           @file.flush
           cmd = ""
         else
-          fgets = @file.gets
+          fgets = @file.gets "\n"
           #puts fgets if fgets.to_s.size > 0
 
           cmd = cmd.to_s + fgets.to_s
