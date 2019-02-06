@@ -66,24 +66,25 @@ module HandAPI
       puts help(cmd)
     end
 
+    def exec_line(line, serial)
+      cmd_name = line.split(" ").first
+
+      if @commands.has_key? cmd_name
+        puts @commands[cmd_name].call(serial, self, line)
+      else
+        puts "! Error: Unknown command"
+      end
+    rescue => e
+      puts "! Exception"
+      puts e.inspect
+      puts e.backtrace.join("\n")
+    end
+
     def loop(serial)
       while true
-        begin
-          putc ">"
-          cmd = gets
-
-          cmd_name = cmd.split(" ").first
-
-          if @commands.has_key? cmd_name
-            puts @commands[cmd_name].call(serial, self, cmd)
-          else
-            puts "! Error: Unknown command"
-          end
-        rescue => e
-          puts "! Exception"
-          puts e.inspect
-          puts e.backtrace.join("\n")
-        end
+        putc ">"
+        cmd = gets
+        exec_line cmd, serial
       end
     end
   end
@@ -169,6 +170,20 @@ cli = HandAPI::CLI.new do |c|
     servos = args[2..-1].map{ |x| x.sub("=", " ")}
     "9 #{speed} #{count.to_i} #{servos.join(" ")}"
   end.brief("assigns values to max 4 servos simultaneously").help("mw <speed> <i>=<value> ... - assigns values to multiple servos (up to 4) simultaneously")
+
+  c.add_command "script" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required argument" if args.size < 2
+    name = args[1]
+
+    File.open(name) do |f|
+        f.each_line("\n") do |line|
+          puts ">> #{line}"
+          cli.exec_line line, serial
+        end
+    end
+    nil
+  end
 end
 
 serial.open do
