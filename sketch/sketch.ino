@@ -296,11 +296,16 @@ const size_t handlers_count = 11;
 
 void setup()
 {
+    #ifdef INITIALIZE_SERVOS_IN_SETUP
+        for(int i = 0; i < servo_count; i++) servos[i].init();
+    #endif
+
     SERIAL.setTimeout(50);
     SERIAL.begin(9600);
-    for(int i = 0; i < servo_count; i++) servos[i].init();
+
 
     SERIAL.println("Initialized");
+    SERIAL.flush();
 }
 
 /**

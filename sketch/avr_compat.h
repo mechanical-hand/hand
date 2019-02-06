@@ -32,6 +32,7 @@
   #define INPUT_ANALOG INPUT
 
   #define ANALOG_MAX 1023
+  #define INITIALIZE_SERVOS_IN_SETUP
 #else
   #define ANALOG_MAX 4095
 #endif

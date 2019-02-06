@@ -15,7 +15,11 @@ namespace hand
             m_initial(initial),
             m_min(-angle/2),
             m_max(angle/2)
-        {}
+        {
+            #ifndef INITIALIZE_SERVOS_IN_SETUP
+                init();
+            #endif
+        }
 
         servo(int pin, int initial, int angle, int min, int max) :
             m_angle(angle),
@@ -23,7 +27,11 @@ namespace hand
             m_pin(pin),
             m_min(min),
             m_max(max)
-        {}
+        {
+            #ifndef INITIALIZE_SERVOS_IN_SETUP
+                init();
+            #endif
+        }
 
         /**
          * @brief Установка положения сервомашинки
