@@ -328,6 +328,7 @@ void setup()
     #ifdef USE_ANALOG_CLAW
         pinMode(POT4_PIN, INPUT_ANALOG);
     #endif
+    pinMode(MODE_SWITCH_PIN, INPUT);
 
     SERIAL.setTimeout(50);
     SERIAL.begin(9600);
@@ -352,14 +353,15 @@ int analogToServo(int pin, int index)
 
 void loop()
 {
-    if(digitalRead(MODE_SWITCH_PIN) == LOW)
+    if(digitalRead(MODE_SWITCH_PIN) == HIGH)
     {
+        digitalWrite(LED_BUILTIN, HIGH);
         int positions[SERVO_COUNT];
         positions[0] = analogToServo(POT1_PIN, 0);
         positions[1] = analogToServo(POT2_PIN, 1);
-        positions[2] = servos[2].getAngle() - analogToServo(POT2_PIN, 2);
+        positions[2] = -analogToServo(POT2_PIN, 2);
         positions[3] = analogToServo(POT3_PIN, 3);
-        positions[4] = servos[4].getAngle() - analogToServo(POT3_PIN, 4);
+        positions[4] = -analogToServo(POT3_PIN, 4);
         #ifdef USE_ANALOG_CLAW
             positions[5] = analogToServo(POT4_PIN, 5);
         #else
@@ -369,10 +371,17 @@ void loop()
                 positions[5] = servos[5].getMin();
         #endif
 
-        multi_write_helper<SERVO_COUNT>(all_indices, positions, SERVO_COUNT, SERVO_SPEED, (Print*) 0);
+        //multi_write_helper<SERVO_COUNT>(all_indices, positions, SERVO_COUNT, SERVO_SPEED, (Print*) 0);
+        for(int i = 0; i < SERVO_COUNT; i++)
+        {
+            servos[i].writeDegrees(positions[i]);
+        }
+        delay(500);
+       
     }
     else
     {
+        digitalWrite(LED_BUILTIN, LOW);
         processor.try_process();
     }
 }
