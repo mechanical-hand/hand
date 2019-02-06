@@ -184,6 +184,26 @@ cli = HandAPI::CLI.new do |c|
     end
     nil
   end
+
+  c.add_command "joint" do |cli, cmd|
+    args = cmd.split(" ")
+    raise "Missing required arguments" if args.size < 3
+
+    joint = case args[1]
+    when "0", "rotary"
+      0
+    when "1", "first"
+      1
+    when "2", "second"
+      2
+    when "3", "claw"
+      3
+    else
+      raise "Invalid joint #{args[1]}"
+    end
+
+    "10 #{joint} #{args[2].to_i}"
+  end
 end
 
 serial.open do

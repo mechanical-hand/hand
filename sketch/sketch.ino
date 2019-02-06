@@ -6,7 +6,8 @@
 // Используемый последовательный порт
 #define SERIAL Serial1
 #define SERVO_EPSILON 3
-#define EXTEND_SPEED 50
+#define SERVO_SPEED 50
+#define EXTEND_SPEED SERVO_SPEED
 
 #include "avr_compat.h"
 
@@ -231,6 +232,50 @@ COMMAND_HANDLER(capture_handler)
     return true;
 }
 
+COMMAND_HANDLER(joint_handler)
+{
+    int index = m_input.parseInt();
+    int position = m_input.parseInt();
+
+    int indices[2];
+    int positions[2];
+    int count;
+
+    switch(index)
+    {
+        case 0:
+            indices[0] = 0;
+            positions[0] = position;
+            count = 1;
+            break;
+        case 1:
+            indices[0] = 1;
+            indices[1] = 2;
+            positions[0] = position;
+            positions[1] = servos[2].getAngle() - position;
+            count = 2;
+            break;
+        case 2:
+            indices[0] = 3;
+            indices[1] = 4;
+            positions[0] = position;
+            positions[1] = servos[4].getAngle() - position;
+            count = 2;
+            break;
+        case 3:
+            indices[0] = 5;
+            positions[0] = position;
+            count = 1;
+            break;
+        default:
+            m_reply.println("Invalid joint number");
+            return false;
+            break;
+    }
+
+    return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, m_input, m_reply);
+}
+
 
 hand::command_handler handlers[] = {
     NULL, //0
@@ -242,10 +287,11 @@ hand::command_handler handlers[] = {
     &extend_handler,//6
     &capture_handler,//7
     &multi_write_handler<2>,
-    &multi_write_handler<4>
+    &multi_write_handler<4>,
+    &joint_handler
 };
 
-const size_t handlers_count = 10;
+const size_t handlers_count = 11;
 
 
 void setup()
