@@ -5,6 +5,7 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
+#define DEBUG_SERIAL Serial
 
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
@@ -21,7 +22,7 @@
 #define POT3_PIN PB0
 #define POT4_PIN PB1
 // Если закоментировать, для активации клешни используется кнопка (пин CLAW_PIN)
-#define USE_ANALOG_CLAW
+//#define USE_ANALOG_CLAW
 #define CLAW_PIN PB11
 
 
@@ -332,6 +333,10 @@ void setup()
     #endif
     pinMode(MODE_SWITCH_PIN, INPUT);
 
+    #if defined(ARDUINO_ARCH_STM32)
+        DEBUG_SERIAL.begin(9600);
+    #endif
+
     SERIAL.setTimeout(50);
     SERIAL.begin(9600);
 
@@ -352,9 +357,9 @@ int analogToServo(int pin, int index)
     return servos[index].clamp(value);
 }
 
-
 void loop()
 {
+    static long last_millis = millis();
     if(digitalRead(MODE_SWITCH_PIN) == HIGH)
     {
         digitalWrite(LED_BUILTIN, HIGH);
@@ -364,7 +369,7 @@ void loop()
         positions[2] = -analogToServo(POT2_PIN, 2);
         positions[3] = analogToServo(POT3_PIN, 3);
         positions[4] = -analogToServo(POT3_PIN, 4);
-        #ifdef USE_ANALOG_CLAW
+        #if defined(USE_ANALOG_CLAW)
             positions[5] = analogToServo(POT4_PIN, 5);
         #else
             if(digitalRead(CLAW_PIN) == HIGH)
@@ -378,8 +383,25 @@ void loop()
         {
             servos[i].writeDegrees(positions[i]);
         }
-        delay(500);
 
+        #if defined(ARDUINO_ARCH_STM32)
+            if(millis() - last_millis > 500)
+            {
+                last_millis = millis();
+                DEBUG_SERIAL.print(analogRead(POT1_PIN));
+                DEBUG_SERIAL.print(" ");
+                DEBUG_SERIAL.print(analogRead(POT2_PIN));
+                DEBUG_SERIAL.print(" ");
+                DEBUG_SERIAL.print(analogRead(POT3_PIN));
+
+                #if defined(USE_ANALOG_CLAW)
+                    DEBUG_SERIAL.print(" ");
+                    DEBUG_SERIAL.print(analogRead(POT4_PIN));
+                #endif
+
+                DEBUG_SERIAL.println();
+            }
+        #endif
     }
     else
     {

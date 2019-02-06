@@ -36,3 +36,7 @@
 
   #define analogReadResolution(x)
 #endif
+
+#if !defined(INPUT_ANALOG)
+  #define INPUT_ANALOG INPUT
+#endif
