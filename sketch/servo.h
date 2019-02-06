@@ -47,7 +47,7 @@ namespace hand
         {
             if(m_pin == NO_PIN) return;
             m_servo.attach(m_pin);
-            m_servo.write(m_initial);
+            writeDegrees(m_initial);
         }
 
         /**

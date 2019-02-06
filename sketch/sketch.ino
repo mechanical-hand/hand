@@ -14,12 +14,12 @@
 
 // Список машинок
 hand::servo servos[] = {
-    hand::servo(PA0, 90, 270), // Поворот
-    hand::servo(PA1, 90, 270), // 1 сустав
-    hand::servo(PA2, 90, 270), // 1 сустав
-    hand::servo(PA3, 90, 270), // 2 сустав
-    hand::servo(PA6, 90, 270), // 2 сустав
-    hand::servo(PA7, 90, 270)  // клешня
+    hand::servo(PA0, 0, 270), // Поворот
+    hand::servo(PA1, 0, 270, -40, 25), // 1 сустав
+    hand::servo(PA2, 0, 270, -25, 40), // 1 сустав
+    hand::servo(PA3, -40, 270, -60, 20), // 2 сустав
+    hand::servo(PA6, 40, 270, -20, 60), // 2 сустав
+    hand::servo(PA7, 40, 270, 30, 270/2)  // клешня
 };
 
 const size_t servo_count = 6;
@@ -181,9 +181,9 @@ COMMAND_HANDLER(rotate_handler)
     bool relative = m_input.parseInt() != 0;
 
     if(relative)
-        servos[0].write(servos[0].read() + angle);
+        servos[0].writeDegrees(servos[0].readDegrees() + angle);
     else
-        servos[0].write(angle);
+        servos[0].writeDegrees(angle);
 
     m_reply.println("Success");
     return true;
@@ -210,9 +210,9 @@ COMMAND_HANDLER(extend_handler)
     int indices[] = {1, 2, 3, 4};
     int positions[] = {
         servos[1].clamp(joint_1),
-        servos[2].clamp(servos[2].getAngle() - joint_1),
+        servos[2].clamp(-joint_1),
         servos[3].clamp(joint_2),
-        servos[4].clamp(servos[4].getAngle() - joint_2)
+        servos[4].clamp(-joint_2)
     };
 
     return multi_write_helper<4>(indices, positions, 4, EXTEND_SPEED , m_input, m_reply);
@@ -253,14 +253,14 @@ COMMAND_HANDLER(joint_handler)
             indices[0] = 1;
             indices[1] = 2;
             positions[0] = position;
-            positions[1] = servos[2].getAngle() - position;
+            positions[1] = -position;
             count = 2;
             break;
         case 2:
             indices[0] = 3;
             indices[1] = 4;
             positions[0] = position;
-            positions[1] = servos[4].getAngle() - position;
+            positions[1] = -position;
             count = 2;
             break;
         case 3:

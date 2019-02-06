@@ -204,6 +204,7 @@ cli = HandAPI::CLI.new do |c|
 
     "10 #{joint} #{args[2].to_i}"
   end
+  
 end
 
 serial.open do

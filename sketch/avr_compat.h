@@ -3,7 +3,7 @@
 Код для тестов на Arduino Uno
 */
 
-#ifndef PA0
+#if !defined(ARDUINO_ARCH_STM32)
   // Меняем пины PA0-PA3 на аппаратные ШИМ выходы Arduino
   #define PA0 3
   #define PA1 5
