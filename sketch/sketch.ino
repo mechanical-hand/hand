@@ -9,7 +9,7 @@
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
 #define EXTEND_SPEED SERVO_SPEED
-
+#define ANALOG_MAX 1023
 
 #include "avr_compat.h"
 #include "servo.h"
@@ -315,6 +315,8 @@ int all_indices[SERVO_COUNT];
 
 void setup()
 {
+    analogReadResolution(10);
+
     #ifdef INITIALIZE_SERVOS_IN_SETUP
         for(int i = 0; i < servo_count; i++) servos[i].init();
     #endif
@@ -377,7 +379,7 @@ void loop()
             servos[i].writeDegrees(positions[i]);
         }
         delay(500);
-       
+
     }
     else
     {
