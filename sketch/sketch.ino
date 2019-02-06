@@ -1,5 +1,5 @@
 #include <Servo.h>
-#include "servo.h"
+
 #include "command.h"
 #include "command_processor.h"
 
@@ -10,6 +10,7 @@
 #define EXTEND_SPEED SERVO_SPEED
 
 #include "avr_compat.h"
+#include "servo.h"
 
 // Список машинок
 hand::servo servos[] = {
