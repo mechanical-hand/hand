@@ -16,24 +16,23 @@
 #include "servo.h"
 
 // Пины для ручного управления
-#define MODE_SWITCH_PIN PB10
+#define MODE_SWITCH_PIN PA7
 #define POT1_PIN PA4
 #define POT2_PIN PA5
-#define POT3_PIN PB0
+#define POT3_PIN PA6
 #define POT4_PIN PB1
 // Если закоментировать, для активации клешни используется кнопка (пин CLAW_PIN)
 //#define USE_ANALOG_CLAW
-#define CLAW_PIN PB11
-
+#define CLAW_PIN PB0
 
 // Список машинок
 hand::servo servos[] = {
     hand::servo(PA0, 0, 270), // Поворот
     hand::servo(PA1, 0, 270, -40, 25), // 1 сустав
-    hand::servo(PA2, 0, 270, -25, 40), // 1 сустав
-    hand::servo(PA3, -40, 270, -60, 20), // 2 сустав
-    hand::servo(PA6, 40, 270, -20, 60), // 2 сустав
-    hand::servo(PA7, 40, 270, 30, 270/2)  // клешня
+    hand::servo(NO_PIN, 0, 270, -25, 40), // 1 сустав
+    hand::servo(PA2, -40, 270, -60, 20), // 2 сустав
+    hand::servo(NO_PIN, 40, 270, -20, 60), // 2 сустав
+    hand::servo(PA3, 40, 270, 30, 270/2)  // клешня
 };
 
 #define SERVO_COUNT 6

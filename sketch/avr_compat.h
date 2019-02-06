@@ -13,16 +13,13 @@
   // Меняем пины на аналоговые
   #define PA4 A0
   #define PA5 A1
-  #define PB0 A2
+  #define PA6 A2
   #define PB1 A3
 
-  // Меняем пины на аппаратные ШИМ выходы
-  #define PA6 10
-  #define PA7 11
+  #define PA7 7
 
   // Меняем пин на любой свободный цифровой (для переключателя)
-  #define PB10 12
-  #define PB11 13
+  #define PB0 4
 
   // Меняем Serial1 на Serial
   #undef SERIAL
