@@ -5,12 +5,25 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
+
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
 #define EXTEND_SPEED SERVO_SPEED
 
+
 #include "avr_compat.h"
 #include "servo.h"
+
+// Пины для ручного управления
+#define MODE_SWITCH_PIN PB10
+#define POT1_PIN PA4
+#define POT2_PIN PA5
+#define POT3_PIN PB0
+#define POT4_PIN PB1
+// Если закоментировать, для активации клешни используется кнопка (пин CLAW_PIN)
+#define USE_ANALOG_CLAW
+#define CLAW_PIN PB11
+
 
 // Список машинок
 hand::servo servos[] = {
@@ -22,7 +35,9 @@ hand::servo servos[] = {
     hand::servo(PA7, 40, 270, 30, 270/2)  // клешня
 };
 
-const size_t servo_count = 6;
+#define SERVO_COUNT 6
+
+const size_t servo_count = SERVO_COUNT;
 
 // Макрос для определения обработчиков команд
 #define COMMAND_HANDLER(name) bool name (Stream& m_input, Print& m_reply)
@@ -88,7 +103,7 @@ COMMAND_HANDLER(ping_handler)
 }
 
 template<int N>
-bool multi_write_helper(int indices[], int positions[], int count, int speed, Stream& m_input, Print& m_reply)
+bool multi_write_helper(int indices[], int positions[], int count, int speed, Print* m_reply)
 {
     long timeout = 1000000/speed * SERVO_EPSILON;
     long last_micros = micros();
@@ -114,6 +129,8 @@ bool multi_write_helper(int indices[], int positions[], int count, int speed, St
         completed = true;
         for(int i = 0; i < count && i < N; i++)
         {
+            if(servos[indices[i]].getPin() == NO_PIN) continue;
+
             int actual_value = servos[indices[i]].readDegrees();
 
             if(actual_value == positions[i]) continue;
@@ -129,7 +146,7 @@ bool multi_write_helper(int indices[], int positions[], int count, int speed, St
             }
         }
     }
-    m_reply.println("Success");
+    if(m_reply) m_reply->println("Success");
 
     return true;
 }
@@ -168,7 +185,7 @@ COMMAND_HANDLER(multi_write_handler)
         positions[i] = servos[indices[i]].clamp(m_input.parseInt());
     }
 
-    return multi_write_helper<N>(indices, positions, servos_c, speed, m_input, m_reply);
+    return multi_write_helper<N>(indices, positions, servos_c, speed, &m_reply);
 }
 
 // Высокоуровневые команды
@@ -215,7 +232,7 @@ COMMAND_HANDLER(extend_handler)
         servos[4].clamp(-joint_2)
     };
 
-    return multi_write_helper<4>(indices, positions, 4, EXTEND_SPEED , m_input, m_reply);
+    return multi_write_helper<4>(indices, positions, 4, EXTEND_SPEED, &m_reply);
 }
 
 /**
@@ -274,7 +291,7 @@ COMMAND_HANDLER(joint_handler)
             break;
     }
 
-    return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, m_input, m_reply);
+    return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, &m_reply);
 }
 
 
@@ -294,11 +311,22 @@ hand::command_handler handlers[] = {
 
 const size_t handlers_count = 11;
 
+int all_indices[SERVO_COUNT];
 
 void setup()
 {
     #ifdef INITIALIZE_SERVOS_IN_SETUP
         for(int i = 0; i < servo_count; i++) servos[i].init();
+    #endif
+
+    for(int i = 0; i < SERVO_COUNT; i++)
+        all_indices[i] = i;
+
+    pinMode(POT1_PIN, INPUT_ANALOG);
+    pinMode(POT2_PIN, INPUT_ANALOG);
+    pinMode(POT3_PIN, INPUT_ANALOG);
+    #ifdef USE_ANALOG_CLAW
+        pinMode(POT4_PIN, INPUT_ANALOG);
     #endif
 
     SERIAL.setTimeout(50);
@@ -314,7 +342,37 @@ void setup()
  */
 hand::command_processor processor(handlers, handlers_count, SERIAL, SERIAL);
 
+int analogToServo(int pin, int index)
+{
+    int raw = analogRead(pin);
+    int value = map(raw, 0, ANALOG_MAX, servos[index].getMin(), servos[index].getMax());
+    return servos[index].clamp(value);
+}
+
+
 void loop()
 {
-    processor.try_process();
+    if(digitalRead(MODE_SWITCH_PIN) == LOW)
+    {
+        int positions[SERVO_COUNT];
+        positions[0] = analogToServo(POT1_PIN, 0);
+        positions[1] = analogToServo(POT2_PIN, 1);
+        positions[2] = servos[2].getAngle() - analogToServo(POT2_PIN, 2);
+        positions[3] = analogToServo(POT3_PIN, 3);
+        positions[4] = servos[4].getAngle() - analogToServo(POT3_PIN, 4);
+        #ifdef USE_ANALOG_CLAW
+            positions[5] = analogToServo(POT4_PIN, 5);
+        #else
+            if(digitalRead(CLAW_PIN) == HIGH)
+                positions[5] = servos[5].getMax();
+            else
+                positions[5] = servos[5].getMin();
+        #endif
+
+        multi_write_helper<SERVO_COUNT>(all_indices, positions, SERVO_COUNT, SERVO_SPEED, (Print*) 0);
+    }
+    else
+    {
+        processor.try_process();
+    }
 }
