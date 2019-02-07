@@ -21,9 +21,6 @@
 #define POT1_PIN PA4
 #define POT2_PIN PA5
 #define POT3_PIN PA6
-#define POT4_PIN PB1
-// Если закоментировать, для активации клешни используется кнопка (пин CLAW_PIN)
-//#define USE_ANALOG_CLAW
 #define CLAW_PIN PB0
 
 // Список машинок
@@ -328,9 +325,7 @@ void setup()
     pinMode(POT1_PIN, INPUT_ANALOG);
     pinMode(POT2_PIN, INPUT_ANALOG);
     pinMode(POT3_PIN, INPUT_ANALOG);
-    #ifdef USE_ANALOG_CLAW
-        pinMode(POT4_PIN, INPUT_ANALOG);
-    #endif
+    pinMode(CLAW_PIN, INPUT);
     pinMode(MODE_SWITCH_PIN, INPUT);
 
     #if defined(ARDUINO_ARCH_STM32) && defined(USE_DEBUG_SERIAL)
@@ -369,14 +364,10 @@ void loop()
         positions[2] = -analogToServo(POT2_PIN, 2);
         positions[3] = analogToServo(POT3_PIN, 3);
         positions[4] = -analogToServo(POT3_PIN, 4);
-        #if defined(USE_ANALOG_CLAW)
-            positions[5] = analogToServo(POT4_PIN, 5);
-        #else
-            if(digitalRead(CLAW_PIN) == HIGH)
-                positions[5] = servos[5].getMax();
-            else
-                positions[5] = servos[5].getMin();
-        #endif
+        if(digitalRead(CLAW_PIN) == HIGH)
+            positions[5] = servos[5].getMax();
+        else
+            positions[5] = servos[5].getMin();
 
         //multi_write_helper<SERVO_COUNT>(all_indices, positions, SERVO_COUNT, SERVO_SPEED, (Print*) 0);
         for(int i = 0; i < SERVO_COUNT; i++)
@@ -393,12 +384,6 @@ void loop()
                 DEBUG_SERIAL.print(analogRead(POT2_PIN));
                 DEBUG_SERIAL.print(" ");
                 DEBUG_SERIAL.print(analogRead(POT3_PIN));
-
-                #if defined(USE_ANALOG_CLAW)
-                    DEBUG_SERIAL.print(" ");
-                    DEBUG_SERIAL.print(analogRead(POT4_PIN));
-                #endif
-
                 DEBUG_SERIAL.println();
             }
         #endif
