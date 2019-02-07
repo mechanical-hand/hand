@@ -1,6 +1,4 @@
 #include <Servo.h>
-
-#include "command.h"
 #include "command_processor.h"
 
 // Используемый последовательный порт
