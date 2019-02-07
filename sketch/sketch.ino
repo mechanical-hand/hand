@@ -6,6 +6,7 @@
 // Используемый последовательный порт
 #define SERIAL Serial1
 #define DEBUG_SERIAL Serial
+//#define USE_DEBUG_SERIAL 1
 
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
@@ -332,7 +333,7 @@ void setup()
     #endif
     pinMode(MODE_SWITCH_PIN, INPUT);
 
-    #if defined(ARDUINO_ARCH_STM32)
+    #if defined(ARDUINO_ARCH_STM32) && defined(USE_DEBUG_SERIAL)
         DEBUG_SERIAL.begin(9600);
     #endif
 
@@ -383,7 +384,7 @@ void loop()
             servos[i].writeDegrees(positions[i]);
         }
 
-        #if defined(ARDUINO_ARCH_STM32)
+        #if defined(ARDUINO_ARCH_STM32) && defined(USE_DEBUG_SERIAL)
             if(millis() - last_millis > 500)
             {
                 last_millis = millis();
