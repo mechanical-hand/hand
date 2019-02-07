@@ -5,12 +5,16 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
+// Используемый последовательный порт для отладки
 #define DEBUG_SERIAL Serial
 //#define USE_DEBUG_SERIAL 1
 
+// Параметры машинок
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
 #define EXTEND_SPEED SERVO_SPEED
+
+// Максимальное значение с АЦП
 #define ANALOG_MAX 1023
 
 #include "avr_compat.h"
@@ -25,16 +29,16 @@
 
 // Список машинок
 hand::servo servos[] = {
-    hand::servo(PA0, 0, 270), // Поворот
-    hand::servo(PA1, 0, 270, -40, 25), // 1 сустав
-    hand::servo(NO_PIN, 0, 270, -25, 40), // 1 сустав
-    hand::servo(PA2, -40, 270, -60, 20), // 2 сустав
-    hand::servo(NO_PIN, 40, 270, -20, 60), // 2 сустав
-    hand::servo(PA3, 40, 270, 30, 270/2)  // клешня
+    //          пин     нач угол мин    макс
+    hand::servo(PA0,    0,  270), // Поворот
+    hand::servo(PA1,    0,  270, -40,   25), // 1 сустав
+    hand::servo(NO_PIN, 0,  270, -25,   40), // 1 сустав
+    hand::servo(PA2,    -40,270, -60,   20), // 2 сустав
+    hand::servo(NO_PIN, 40, 270, -20,   60), // 2 сустав
+    hand::servo(PA3,    40, 270, 30,    270/2)  // клешня
 };
-
+// Количество машинок
 #define SERVO_COUNT 6
-
 const size_t servo_count = SERVO_COUNT;
 
 // Макрос для определения обработчиков команд
@@ -100,6 +104,14 @@ COMMAND_HANDLER(ping_handler)
     return true;
 }
 
+/**
+ * @brief Вспомогательный метод для одновременной установки положения сервомашинок с заданной скоростью
+ * @param indices Массив индексов машинок
+ * @param positions Массив положений машинок
+ * @param count Число машинок
+ * @param speed Скорость
+ * @param m_reply Поток вывода
+ */
 template<int N>
 bool multi_write_helper(int indices[], int positions[], int count, int speed, Print* m_reply)
 {
@@ -110,6 +122,7 @@ bool multi_write_helper(int indices[], int positions[], int count, int speed, Pr
 
     int directions[N];
 
+    // Устанавливаем, в какую сторону нужно двигать машинку
     for(int i = 0; i < count && i < N; i++)
     {
         if(servos[indices[i]].readDegrees() <= positions[i])
@@ -118,10 +131,11 @@ bool multi_write_helper(int indices[], int positions[], int count, int speed, Pr
             directions[i] = -1;
     }
 
+    // Постепенно изменяем углы машинок на SERVO_EPSILON в нужную сторону
     while(!completed)
     {
+        // Ждем некоторое время, чтобы двигаться с определенной скоростью
         if(micros() < last_micros + timeout) continue;
-
         last_micros = micros();
 
         completed = true;
@@ -145,7 +159,6 @@ bool multi_write_helper(int indices[], int positions[], int count, int speed, Pr
         }
     }
     if(m_reply) m_reply->println("Success");
-
     return true;
 }
 
@@ -163,21 +176,13 @@ COMMAND_HANDLER(multi_write_handler)
     int indices[N] = {0};
     int positions[N] = {0};
 
-    char invalid_servo_message[] = {
-        /*0*/ 'I', 'n', 'v', 'a', 'l', 'i', 'd', ' ',
-        /*8*/ 's', 'e', 'r', 'v', 'o', ' ',
-        /*14*/'i', 'n', 'd', 'e', 'x', ' ',
-        /*20*/' ', 0, 0, 0, 0
-    };
-    const size_t servo_number_index = 20;
-
     for(int i = 0; i < servos_c && i < N; i++)
     {
         indices[i] = m_input.parseInt();
         if(indices[i] >= servo_count)
         {
-            itoa(indices[i] % 1000, &(invalid_servo_message[20]), 10);
-            m_reply.println(invalid_servo_message);
+            m_reply.print("Invalid servo index ");
+            m_reply.println(indices[i]);
             return false;
         }
         positions[i] = servos[indices[i]].clamp(m_input.parseInt());
@@ -211,16 +216,8 @@ COMMAND_HANDLER(extend_handler)
 {
     int delta = m_input.parseInt();
 
-    int joint_1 = servos[1].readDegrees(),
-        joint_2 = servos[3].readDegrees();
-
-    joint_1 += delta;
-    joint_2 -= delta;
-
-    //servos[1].writeDegrees(joint_1);
-    //servos[2].writeDegrees(servos[2].getAngle() - joint_1);
-    //servos[3].writeDegrees(joint_2);
-    //servos[4].writeDegrees(servos[2].getAngle() - joint_2);
+    int joint_1 = servos[1].readDegrees() + delta,
+        joint_2 = servos[3].readDegrees() - delta;
 
     int indices[] = {1, 2, 3, 4};
     int positions[] = {
@@ -248,6 +245,9 @@ COMMAND_HANDLER(capture_handler)
     return true;
 }
 
+/**
+ * @brief Обработчик команды управления суставом
+ */
 COMMAND_HANDLER(joint_handler)
 {
     int index = m_input.parseInt();
@@ -292,7 +292,7 @@ COMMAND_HANDLER(joint_handler)
     return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, &m_reply);
 }
 
-
+// Список обработчиков команд
 hand::command_handler handlers[] = {
     NULL, //0
     &read_handler,//1
@@ -307,9 +307,8 @@ hand::command_handler handlers[] = {
     &joint_handler
 };
 
+// Количество обработчиков
 const size_t handlers_count = 11;
-
-int all_indices[SERVO_COUNT];
 
 void setup()
 {
@@ -318,9 +317,6 @@ void setup()
     #ifdef INITIALIZE_SERVOS_IN_SETUP
         for(int i = 0; i < servo_count; i++) servos[i].init();
     #endif
-
-    for(int i = 0; i < SERVO_COUNT; i++)
-        all_indices[i] = i;
 
     pinMode(POT1_PIN, INPUT_ANALOG);
     pinMode(POT2_PIN, INPUT_ANALOG);
@@ -334,8 +330,6 @@ void setup()
 
     SERIAL.setTimeout(50);
     SERIAL.begin(9600);
-
-
     SERIAL.println("Initialized");
     SERIAL.flush();
 }
@@ -357,7 +351,6 @@ void loop()
     static long last_millis = millis();
     if(digitalRead(MODE_SWITCH_PIN) == HIGH)
     {
-        digitalWrite(LED_BUILTIN, HIGH);
         int positions[SERVO_COUNT];
         positions[0] = analogToServo(POT1_PIN, 0);
         positions[1] = analogToServo(POT2_PIN, 1);
@@ -369,7 +362,6 @@ void loop()
         else
             positions[5] = servos[5].getMin();
 
-        //multi_write_helper<SERVO_COUNT>(all_indices, positions, SERVO_COUNT, SERVO_SPEED, (Print*) 0);
         for(int i = 0; i < SERVO_COUNT; i++)
         {
             servos[i].writeDegrees(positions[i]);
@@ -390,7 +382,6 @@ void loop()
     }
     else
     {
-        digitalWrite(LED_BUILTIN, LOW);
         processor.try_process();
     }
 }
