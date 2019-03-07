@@ -93,6 +93,9 @@ COMMAND_HANDLER(write_handler)
  */
 COMMAND_HANDLER(ping_handler)
 {
+    #ifdef ENABLE_DEBUG
+        logger.println("Test");
+    #endif
     m_reply.println("Pong");
     return true;
 }

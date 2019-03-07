@@ -33,14 +33,17 @@ module HandAPI
           @file.write str
           @file.flush
           cmd = ""
-        elsif cmd.match(/^Log:/)
-          puts cmd
         else
           fgets = @file.gets "\n"
           #puts fgets if fgets.to_s.size > 0
 
           cmd = cmd.to_s + fgets.to_s
           cmd += "\n" if fgets.to_s.match("\n") && !cmd.match("\n")
+          if cmd.match(/^Log:/)
+            puts cmd
+            cmd = ""
+            next
+          end
           break if cmd.match(/^Invalid command/)
         end
       end
