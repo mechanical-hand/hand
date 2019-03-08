@@ -27,7 +27,7 @@ module HandAPI
       @file.write str
       @file.flush
       cmd = ""
-      while !cmd.to_s.end_with?("\n") || cmd.match(/^Initialized/) || cmd.to_s.size < 2
+      while !cmd.to_s.end_with?("\n") || cmd.match(/^Initialized/) || cmd.to_s.size < 2 || cmd.match(/^Log:/)
         if cmd.match(/^Initialized/)
           puts "RETRY"
           @file.write str
@@ -39,6 +39,11 @@ module HandAPI
 
           cmd = cmd.to_s + fgets.to_s
           cmd += "\n" if fgets.to_s.match("\n") && !cmd.match("\n")
+          if cmd.match(/^Log:/)
+            puts cmd
+            cmd = ""
+            next
+          end
           break if cmd.match(/^Invalid command/)
         end
       end

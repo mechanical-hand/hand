@@ -3,27 +3,22 @@
 
 // Используемый последовательный порт
 #define SERIAL Serial1
-// Используемый последовательный порт для отладки
-#define DEBUG_SERIAL Serial
-//#define USE_DEBUG_SERIAL 1
+
+#define ENABLE_DEBUG
+
+
+#ifdef ENABLE_DEBUG
+    #include "log.h"
+    hand::logger<HardwareSerial> logger = hand::make_logger(SERIAL);
+#endif
 
 // Параметры машинок
 #define SERVO_EPSILON 3
 #define SERVO_SPEED 50
 #define EXTEND_SPEED SERVO_SPEED
 
-// Максимальное значение с АЦП
-#define ANALOG_MAX 1023
-
 #include "avr_compat.h"
 #include "servo.h"
-
-// Пины для ручного управления
-#define MODE_SWITCH_PIN PA7
-#define POT1_PIN PA4
-#define POT2_PIN PA5
-#define POT3_PIN PA6
-#define CLAW_PIN PB0
 
 // Список машинок
 hand::servo servos[] = {
@@ -98,6 +93,9 @@ COMMAND_HANDLER(write_handler)
  */
 COMMAND_HANDLER(ping_handler)
 {
+    #ifdef ENABLE_DEBUG
+        logger.println("Test");
+    #endif
     m_reply.println("Pong");
     return true;
 }
@@ -310,20 +308,10 @@ const size_t handlers_count = 11;
 
 void setup()
 {
-    analogReadResolution(10);
+    //analogReadResolution(10);
 
     #ifdef INITIALIZE_SERVOS_IN_SETUP
         for(int i = 0; i < servo_count; i++) servos[i].init();
-    #endif
-
-    pinMode(POT1_PIN, INPUT_ANALOG);
-    pinMode(POT2_PIN, INPUT_ANALOG);
-    pinMode(POT3_PIN, INPUT_ANALOG);
-    pinMode(CLAW_PIN, INPUT);
-    pinMode(MODE_SWITCH_PIN, INPUT);
-
-    #if defined(ARDUINO_ARCH_STM32) && defined(USE_DEBUG_SERIAL)
-        DEBUG_SERIAL.begin(9600);
     #endif
 
     SERIAL.setTimeout(50);
@@ -337,49 +325,7 @@ void setup()
  */
 hand::command_processor processor(handlers, handlers_count, SERIAL, SERIAL);
 
-int analogToServo(int pin, int index)
-{
-    int raw = analogRead(pin);
-    int value = map(raw, 0, ANALOG_MAX, servos[index].getMin(), servos[index].getMax());
-    return servos[index].clamp(value);
-}
-
 void loop()
 {
-    static long last_millis = millis();
-    if(digitalRead(MODE_SWITCH_PIN) == HIGH)
-    {
-        int positions[SERVO_COUNT];
-        positions[0] = analogToServo(POT1_PIN, 0);
-        positions[1] = analogToServo(POT2_PIN, 1);
-        positions[2] = -analogToServo(POT2_PIN, 2);
-        positions[3] = analogToServo(POT3_PIN, 3);
-        positions[4] = -analogToServo(POT3_PIN, 4);
-        if(digitalRead(CLAW_PIN) == HIGH)
-            positions[5] = servos[5].getMax();
-        else
-            positions[5] = servos[5].getMin();
-
-        for(int i = 0; i < SERVO_COUNT; i++)
-        {
-            servos[i].writeDegrees(positions[i]);
-        }
-
-        #if defined(ARDUINO_ARCH_STM32) && defined(USE_DEBUG_SERIAL)
-            if(millis() - last_millis > 500)
-            {
-                last_millis = millis();
-                DEBUG_SERIAL.print(analogRead(POT1_PIN));
-                DEBUG_SERIAL.print(" ");
-                DEBUG_SERIAL.print(analogRead(POT2_PIN));
-                DEBUG_SERIAL.print(" ");
-                DEBUG_SERIAL.print(analogRead(POT3_PIN));
-                DEBUG_SERIAL.println();
-            }
-        #endif
-    }
-    else
-    {
-        processor.try_process();
-    }
+    processor.try_process();
 }
