@@ -1,12 +1,13 @@
 #pragma once
 
+#define SERIAL Serial1
+
 #ifndef HAND_PLATFORMIO_CONFIG
-    #define SERIAL Serial1
     #define ENABLE_DEBUG
 #endif
 
 #ifdef ENABLE_DEBUG
-    #include "log.h"
+    #include <log.h>
     hand::logger<HardwareSerial> logger = hand::make_logger(SERIAL);
 #endif
 
@@ -23,7 +24,7 @@
 #endif
 
 #include "avr_compat.h"
-#include "servo.h"
+#include <servo.h>
 
 // Список машинок
 hand::servo servos[] = {

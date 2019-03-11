@@ -1,7 +1,7 @@
 #include <Servo.h>
 #include "config.h"
 
-#include "command_processor.h"
+#include <command_processor.h>
 
 const size_t servo_count = SERVO_COUNT;
 
