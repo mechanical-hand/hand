@@ -1,4 +1,5 @@
 #pragma once
+#include <SPI.h>
 
 namespace hand
 {
@@ -61,30 +62,6 @@ namespace hand
     const SPISettings gamepad_settings(500000, LSBFIRST, SPI_MODE2);
 
     typedef uint32_t register_t;
-
-    template<typename T>
-    inline bool check_bit(T& data, uint8_t idx)
-    {
-        return (data & 1 << idx);
-    }
-
-    template<typename T>
-    inline void set_bit(T& data, uint8_t idx)
-    {
-        data |= (1 << idx);
-    }
-
-    template<typename T>
-    inline void reset_bit(T& data, uint8_t idx)
-    {
-        data &= ~(1 << idx);
-    }
-
-    template<typename T>
-    inline void toggle_bit(T& data, uint8_t idx)
-    {
-        data ^= (1 << idx);
-    }
 
     const static uint8_t m_enter_cfg[5] = {0x01, 0x43, 0x00, 0x01, 0x00};
     const static uint8_t m_set_mode[] = {0x01, 0x44, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00};
