@@ -17,7 +17,7 @@ const size_t servo_count = SERVO_COUNT;
  */
 COMMAND_HANDLER(read_handler)
 {
-    int servo_number = m_input.parseInt();
+    unsigned int servo_number = m_input.parseInt();
     if(servo_number >= servo_count)
     {
         m_reply.print("Invalid servo number ");
@@ -41,7 +41,7 @@ COMMAND_HANDLER(read_handler)
  */
 COMMAND_HANDLER(write_handler)
 {
-    int servo_number = m_input.parseInt();
+    unsigned int servo_number = m_input.parseInt();
     int position = m_input.parseInt();
 
     if(servo_number >= servo_count)
@@ -80,10 +80,10 @@ COMMAND_HANDLER(ping_handler)
  * @param m_reply Поток вывода
  */
 template<int N>
-bool multi_write_helper(int indices[], int positions[], int count, int speed, Print* m_reply)
+bool multi_write_helper(unsigned int indices[], int positions[], int count, int speed, Print* m_reply)
 {
-    long timeout = 1000000/speed * SERVO_EPSILON;
-    long last_micros = micros();
+    unsigned long timeout = 1000000/speed * SERVO_EPSILON;
+    unsigned long last_micros = micros();
 
     bool completed = false;
 
@@ -140,7 +140,7 @@ COMMAND_HANDLER(multi_write_handler)
 {
     int speed = m_input.parseInt();
     int servos_c = m_input.parseInt();
-    int indices[N] = {0};
+    unsigned int indices[N] = {0};
     int positions[N] = {0};
 
     for(int i = 0; i < servos_c && i < N; i++)
@@ -186,7 +186,7 @@ COMMAND_HANDLER(extend_handler)
     int joint_1 = servos[1].readDegrees() + delta,
         joint_2 = servos[3].readDegrees() - delta;
 
-    int indices[] = {1, 2, 3, 4};
+    unsigned int indices[] = {1, 2, 3, 4};
     int positions[] = {
         servos[1].clamp(joint_1),
         servos[2].clamp(-joint_1),
@@ -220,7 +220,7 @@ COMMAND_HANDLER(joint_handler)
     int index = m_input.parseInt();
     int position = m_input.parseInt();
 
-    int indices[2];
+    unsigned int indices[2];
     int positions[2];
     int count;
 
@@ -282,7 +282,7 @@ void setup()
     //analogReadResolution(10);
 
     #ifdef INITIALIZE_SERVOS_IN_SETUP
-        for(int i = 0; i < servo_count; i++) servos[i].init();
+        for(unsigned int i = 0; i < servo_count; i++) servos[i].init();
     #endif
 
     HAND_SERIAL.setTimeout(50);
