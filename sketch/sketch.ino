@@ -285,16 +285,16 @@ void setup()
         for(int i = 0; i < servo_count; i++) servos[i].init();
     #endif
 
-    SERIAL.setTimeout(50);
-    SERIAL.begin(9600);
-    SERIAL.println("Initialized");
-    SERIAL.flush();
+    HAND_SERIAL.setTimeout(50);
+    HAND_SERIAL.begin(9600);
+    HAND_SERIAL.println("Initialized");
+    HAND_SERIAL.flush();
 }
 
 /**
  * Обработчик поступающих команд
  */
-hand::command_processor processor(handlers, handlers_count, SERIAL, SERIAL);
+hand::command_processor processor(handlers, handlers_count, HAND_SERIAL, HAND_SERIAL);
 
 void loop()
 {

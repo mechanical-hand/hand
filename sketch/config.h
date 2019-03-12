@@ -1,6 +1,8 @@
 #pragma once
 
-#define SERIAL Serial1
+#ifndef HAND_SERIAL
+    #define HAND_SERIAL Serial1
+#endif
 
 #ifndef HAND_PLATFORMIO_CONFIG
     #define ENABLE_DEBUG
@@ -8,7 +10,7 @@
 
 #ifdef ENABLE_DEBUG
     #include <log.h>
-    hand::logger<HardwareSerial> logger = hand::make_logger(SERIAL);
+    hand::logger<HardwareSerial> logger = hand::make_logger(HAND_SERIAL);
 #endif
 
 #ifndef SERVO_EPSILON
