@@ -25,7 +25,6 @@
     #define EXTEND_SPEED SERVO_SPEED
 #endif
 
-#include "avr_compat.h"
 #include <servo.h>
 
 // Список машинок
