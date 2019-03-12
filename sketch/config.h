@@ -25,6 +25,10 @@
     #define EXTEND_SPEED SERVO_SPEED
 #endif
 
+#ifdef ENABLE_PS_GAMEPAD
+    #include <ps_gamepad.h>
+#endif
+
 #include <servo.h>
 
 // Список машинок

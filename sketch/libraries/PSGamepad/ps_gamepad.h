@@ -136,7 +136,7 @@ namespace hand
 
             send(m_buffer, 9);
 
-            if(m_buffer[1] = 0x79) // Full Data Return Mode
+            if(m_buffer[1] == 0x79) // Full Data Return Mode
                 send(m_buffer + 9, 12);
 
             m_buttons = *(uint16_t*)(m_buffer + 3);
