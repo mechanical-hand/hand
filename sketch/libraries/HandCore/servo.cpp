@@ -5,8 +5,8 @@ using namespace hand;
 
 servo::servo(int pin, int initial, int angle) :
     m_angle(angle),
-    m_pin(pin),
     m_initial(initial),
+    m_pin(pin),
     m_min(-angle/2),
     m_max(angle/2)
 {

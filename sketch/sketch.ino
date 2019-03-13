@@ -285,6 +285,10 @@ void setup()
         for(unsigned int i = 0; i < servo_count; i++) servos[i].init();
     #endif
 
+    #ifdef ENABLE_PS_GAMEPAD
+        SPI.begin();
+    #endif
+
     HAND_SERIAL.setTimeout(50);
     HAND_SERIAL.begin(9600);
     HAND_SERIAL.println("Initialized");
