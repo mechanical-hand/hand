@@ -61,8 +61,11 @@ namespace hand
 
     const SPISettings gamepad_settings(500000, LSBFIRST, SPI_MODE2);
 
-    typedef uint32_t register_t;
-
+    #ifdef HAND_REGISTER_T
+        typedef HAND_REGISTER_T register_t;
+    #else
+        typedef uint32_t register_t;
+    #endif
     const static uint8_t m_enter_cfg[5] = {0x01, 0x43, 0x00, 0x01, 0x00};
     const static uint8_t m_set_mode[] = {0x01, 0x44, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00};
     const static uint8_t m_set_bytes_large[] = {0x01,0x4F,0x00,0xFF,0xFF,0x03,0x00,0x00,0x00};
