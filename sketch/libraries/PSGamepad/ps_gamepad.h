@@ -1,5 +1,6 @@
 #pragma once
 #include <SPI.h>
+#include <log.h>
 
 namespace hand
 {
@@ -97,7 +98,7 @@ namespace hand
             readGamepad(m1, m2);
         }
 
-        bool button(ps2_button btn)
+        bool button(uint16_t btn)
         {
             return ~m_buttons & btn;
         }
@@ -107,17 +108,17 @@ namespace hand
             return m_last_buttons ^ m_buttons;
         }
 
-        bool changed(ps2_button btn)
+        bool changed(uint16_t btn)
         {
             return (m_last_buttons ^ m_buttons) & btn;
         }
 
-        bool pressed(ps2_button btn)
+        bool pressed(uint16_t btn)
         {
             return changed(btn) && button(btn);
         }
 
-        bool released(ps2_button btn)
+        bool released(uint16_t btn)
         {
              return changed(btn) && !button(btn);
         }
@@ -135,5 +136,11 @@ namespace hand
         uint8_t m_read_delay;
         uint8_t m_buffer[21], m_controller_type;
         uint16_t m_buttons, m_last_buttons;
+
+        #ifdef ENABLE_DEBUG
+            logger<HardwareSerial> *m_log;
+        #endif
+
+
     };
 }

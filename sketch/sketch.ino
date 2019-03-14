@@ -5,6 +5,9 @@
 
 const size_t servo_count = SERVO_COUNT;
 
+using hand::ps2_button;
+using hand::ps2_analog;
+
 // Макрос для определения обработчиков команд
 #define COMMAND_HANDLER(name) bool name (Stream& m_input, Print& m_reply)
 
@@ -35,7 +38,6 @@ COMMAND_HANDLER(read_handler)
 /**
  * @brief Обработчик команды записи
  *
- * Документацию к командам см. в command.h.
  * При обращении к несуществующей сервомашинке печатает в поток выходных данных строку "Invalid servo number N", где N - номер сервомашинки.
  * Иначе печатает "Success"
  */
@@ -277,9 +279,27 @@ hand::command_handler handlers[] = {
 // Количество обработчиков
 const size_t handlers_count = 11;
 
+#ifdef ENABLE_PS_GAMEPAD
+    hand::ps2_gamepad gamepad(GAMEPAD_SS_PIN, false, false);
+
+    bool manual_mode()
+    {
+        #ifdef ENABLE_MANUAL_CONTROL_SWITCH
+            static volatile hand::register_t *mcs_reg = portOutputRegister(digitalPinToPort(MANUAL_CONTROL_SWITCH_PIN));
+            static hand::register_t mcs_mask = digitalPinToBitMask(MANUAL_CONTROL_SWITCH_PIN);
+            return *mcs_reg & mcs_mask;
+        #else
+            return true;
+        #endif
+    }
+#endif
+
 void setup()
 {
     //analogReadResolution(10);
+    #ifdef ENABLE_DEBUG
+        hand::logger_instance = &logger;
+    #endif
 
     #ifdef INITIALIZE_SERVOS_IN_SETUP
         for(unsigned int i = 0; i < servo_count; i++) servos[i].init();
@@ -293,6 +313,16 @@ void setup()
     HAND_SERIAL.begin(9600);
     HAND_SERIAL.println("Initialized");
     HAND_SERIAL.flush();
+
+    #ifdef ENABLE_PS_GAMEPAD
+        hand::ps2_config_result cfg = gamepad.configure();
+        #ifdef ENABLE_DEBUG
+            logger.begin();
+            logger.print("Gamepad config result : ");
+            logger.print((int)cfg);
+            logger.end();
+        #endif
+    #endif
 }
 
 /**
@@ -302,5 +332,67 @@ hand::command_processor processor(handlers, handlers_count, HAND_SERIAL, HAND_SE
 
 void loop()
 {
+    #ifdef ENABLE_PS_GAMEPAD
+
+        static unsigned long last_millis = millis();
+        static unsigned long start_times[3];
+        if(manual_mode())
+        {
+
+            gamepad.update(0,0);
+
+            unsigned long delta_time = millis() - last_millis;
+            last_millis = millis();
+
+            int rotation = 0;
+            if(gamepad.button(ps2_button::PSB_L1))
+                rotation += SERVO_SPEED / 3;
+            if(gamepad.button(ps2_button::PSB_R1))
+                rotation -= SERVO_SPEED / 3;
+            if(gamepad.button(ps2_button::PSB_L2))
+                rotation += 2 * SERVO_SPEED / 3;
+            if(gamepad.button(ps2_button::PSB_R2))
+                rotation -= 2 * SERVO_SPEED / 3;
+
+
+            if(gamepad.pressed(
+                ps2_button::PSB_L1 |
+                ps2_button::PSB_R1 |
+                ps2_button::PSB_L2 |
+                ps2_button::PSB_R2 ))
+                start_times[0] = millis();
+            #ifdef ENABLE_ANALOG_ROTATION
+                if(
+                    !gamepad.button(
+                        ps2_button::PSB_L1 |
+                        ps2_button::PSB_R1 |
+                        ps2_button::PSB_L2 |
+                        ps2_button::PSB_R2 )
+                )
+                    rotation = map(gamepad.analog(ps2_analog::PSA_LX), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+            #endif
+
+            int max_acceleration = MAX_ACCELERATION * (millis() - start_times[0]) / 1000;
+            if(rotation < 0)
+                rotation = max(rotation, -max_acceleration) * delta_time / 1000;
+            else
+                rotation = min(rotation, max_acceleration) * delta_time / 1000;
+
+            servos[0].writeDegrees(servos[0].readDegrees() + rotation);
+
+            int joint_1 = map(gamepad.analog(ps2_analog::PSA_LY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+            servos[1].writeDegrees(servos[1].readDegrees() + joint_1 * delta_time / 1000);
+            servos[2].writeDegrees(servos[2].readDegrees() - joint_1 * delta_time / 1000);
+
+            int joint_2 = map(gamepad.analog(ps2_analog::PSA_RY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+            servos[3].writeDegrees(servos[3].readDegrees() + joint_2 * delta_time / 1000);
+            servos[4].writeDegrees(servos[4].readDegrees() - joint_2 * delta_time / 1000);
+
+            if(gamepad.button(ps2_button::PSB_CIRCLE))
+                servos[5].writeDegrees(servos[5].getMin());
+            if(gamepad.button(ps2_button::PSB_CROSS))
+                servos[5].writeDegrees(servos[5].getMax());
+        }
+    #endif
     processor.try_process();
 }

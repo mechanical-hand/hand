@@ -7,6 +7,7 @@ ps2_gamepad::ps2_gamepad(uint8_t ss, bool rumble, bool pressures) :
     m_rumble(rumble),
     m_pressures(pressures)
 {
+
     m_ss_mask = digitalPinToBitMask(ss);
     m_ss_reg = portOutputRegister(digitalPinToPort(ss));
     for(int i = 0; i < 21; i++)
@@ -15,12 +16,38 @@ ps2_gamepad::ps2_gamepad(uint8_t ss, bool rumble, bool pressures) :
 
 ps2_config_result ps2_gamepad::configure()
 {
+
+    #ifdef ENABLE_DEBUG
+        m_log = logger_instance;
+
+        if(m_log)
+        {
+            m_log->begin();
+            m_log->print("PS2 Gamepad initialized (SS: ");
+            m_log->print((int)m_ss_pin);
+            m_log->print(")");
+            m_log->end();
+        }
+    #endif
+
     m_last_read = millis();
     pinMode(m_ss_pin, OUTPUT);
     *m_ss_reg |= m_ss_mask;
     m_read_delay = 10; // TODO
 
     readGamepad(0, 0);
+
+    #ifdef ENABLE_DEBUG
+        if(m_log)
+        {
+            m_log->begin();
+            m_log->print("[");
+            m_log->print(m_ss_pin);
+            m_log->print("] Read gamepad, byte at [1] : 0x");
+            m_log->print((int)m_buffer[1], HEX);
+            m_log->end();
+        }
+    #endif
 
     switch (m_buffer[1])
     {
@@ -39,6 +66,18 @@ ps2_config_result ps2_gamepad::configure()
 
     m_controller_type = type[3];
 
+    #ifdef ENABLE_DEBUG
+        if(m_log)
+        {
+            m_log->begin();
+            m_log->print("[");
+            m_log->print(m_ss_pin);
+            m_log->print("] Controller type : 0x");
+            m_log->print((int)type[3], HEX);
+            m_log->end();
+        }
+    #endif
+
     sendCommand(m_set_mode, sizeof(m_set_mode));
 
     if(m_rumble) sendCommand(m_enable_rumble, sizeof(m_enable_rumble));
@@ -56,7 +95,20 @@ void ps2_gamepad::readGamepad(uint8_t motor1, uint8_t motor2)
     m_last_buttons = m_buttons;
     unsigned long last_delay = millis() - m_last_read;
 
-    if(last_delay > 1500) reconfigure();
+    if(last_delay > 1500)
+    {
+        #ifdef ENABLE_DEBUG
+            if(m_log)
+            {
+                m_log->begin();
+                m_log->print("[");
+                m_log->print(m_ss_pin);
+                m_log->print("] Timeout over 1500 ms");
+                m_log->end();
+            }
+        #endif
+        reconfigure();
+    }
     if(last_delay < m_read_delay) delay(m_read_delay - last_delay);
 
     for(int i = 0; i < 21; i++)

@@ -27,6 +27,20 @@
 
 #ifdef ENABLE_PS_GAMEPAD
     #include <ps_gamepad.h>
+
+    #ifndef GAMEPAD_SS_PIN
+        #define GAMEPAD_SS_PIN PA4
+    #endif
+
+    #ifdef ENABLE_MANUAL_CONTROL_SWITCH
+        #ifndef MANUAL_CONTROL_SWITCH_PIN
+            #define MANUAL_CONTROL_SWITCH_PIN PA5
+        #endif
+    #endif
+
+    #ifndef MAX_ACCELERATION
+        #define MAX_ACCELERATION 25
+    #endif
 #endif
 
 #include <servo.h>
