@@ -2,6 +2,8 @@
 #include "config.h"
 
 #include <command_processor.h>
+#include <hardware_spi_driver.h>
+#include <software_spi_driver.h>
 
 const size_t servo_count = SERVO_COUNT;
 
@@ -10,6 +12,19 @@ using hand::ps2_analog;
 
 // Макрос для определения обработчиков команд
 #define COMMAND_HANDLER(name) bool name (Stream& m_input, Print& m_reply)
+
+#ifdef ENABLE_PS_GAMEPAD
+    bool manual_mode()
+    {
+        #ifdef ENABLE_MANUAL_CONTROL_SWITCH
+            static volatile hand::register_t *mcs_reg = portInputRegister(digitalPinToPort(MANUAL_CONTROL_SWITCH_PIN));
+            static hand::register_t mcs_mask = digitalPinToBitMask(MANUAL_CONTROL_SWITCH_PIN);
+            return *mcs_reg & mcs_mask;
+        #else
+            return true;
+        #endif
+    }
+#endif
 
 /**
  * @brief Обработчик команды чтения
@@ -261,6 +276,52 @@ COMMAND_HANDLER(joint_handler)
     return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, &m_reply);
 }
 
+#ifdef ENABLE_PS_GAMEPAD
+    //hand::hardware_spi_driver driver(hand::gamepad_settings, GAMEPAD_SS_PIN);
+    hand::software_spi_driver driver(11, 12, 13, 10);
+    hand::ps2_gamepad gamepad(driver, false, false);
+#endif
+
+COMMAND_HANDLER(report_handler)
+{
+    m_reply.print("Success: ");
+    #ifdef ENABLE_PS_GAMEPAD
+        m_reply.print("gamepad_support:enabled;gamepad_state:");
+        m_reply.print(gamepad.lastConfigResult());
+        m_reply.print(";gamepad_lx:");
+        m_reply.print((int)gamepad.analog(ps2_analog::PSA_LX));
+        m_reply.print(";gamepad_ly:");
+        m_reply.print((int)gamepad.analog(ps2_analog::PSA_LY));
+        m_reply.print(";gamepad_rx:");
+        m_reply.print((int)gamepad.analog(ps2_analog::PSA_RX));
+        m_reply.print(";gamepad_ry:");
+        m_reply.print((int)gamepad.analog(ps2_analog::PSA_RY));
+        m_reply.print(";gamepad_buttons:");
+        m_reply.print(gamepad.buttonsState(), BIN);
+        m_reply.print(";gamepad_buffer:");
+        for(int i = 0; i < 21; i++)
+        {
+            m_reply.print(gamepad.buffer()[i], HEX);
+            m_reply.print(" ");
+        }
+    #else
+        m_reply.print("gamepad_support: disabled;");
+    #endif
+
+    for(int i = 0; i < servo_count; i++)
+    {
+        m_reply.print("servo");
+        m_reply.print(i);
+        m_reply.print(":");
+        m_reply.print(servos[i].readDegrees());
+        m_reply.print(";");
+    }
+
+    m_reply.println();
+    return true;
+}
+
+
 // Список обработчиков команд
 hand::command_handler handlers[] = {
     NULL, //0
@@ -273,29 +334,19 @@ hand::command_handler handlers[] = {
     &capture_handler,//7
     &multi_write_handler<2>,
     &multi_write_handler<4>,
-    &joint_handler
+    &joint_handler,
+    &report_handler
 };
 
 // Количество обработчиков
-const size_t handlers_count = 11;
-
-#ifdef ENABLE_PS_GAMEPAD
-    hand::ps2_gamepad gamepad(GAMEPAD_SS_PIN, false, false);
-
-    bool manual_mode()
-    {
-        #ifdef ENABLE_MANUAL_CONTROL_SWITCH
-            static volatile hand::register_t *mcs_reg = portOutputRegister(digitalPinToPort(MANUAL_CONTROL_SWITCH_PIN));
-            static hand::register_t mcs_mask = digitalPinToBitMask(MANUAL_CONTROL_SWITCH_PIN);
-            return *mcs_reg & mcs_mask;
-        #else
-            return true;
-        #endif
-    }
-#endif
+const size_t handlers_count = 12;
 
 void setup()
 {
+    #ifdef HARDWARE_SS_PIN
+        pinMode(HARDWARE_SS_PIN, OUTPUT);
+    #endif
+
     //analogReadResolution(10);
     #ifdef ENABLE_DEBUG
         hand::logger_instance = &logger;
@@ -306,15 +357,21 @@ void setup()
     #endif
 
     #ifdef ENABLE_PS_GAMEPAD
-        SPI.begin();
+        pinMode(GAMEPAD_SS_PIN, OUTPUT);
+        //SPI.begin();
     #endif
 
     HAND_SERIAL.setTimeout(50);
     HAND_SERIAL.begin(9600);
     HAND_SERIAL.println("Initialized");
+    HAND_SERIAL.println("Log: Waiting 10 sec");
     HAND_SERIAL.flush();
 
+
+    delay(10000);
+
     #ifdef ENABLE_PS_GAMEPAD
+        delay(1000);
         hand::ps2_config_result cfg = gamepad.configure();
         #ifdef ENABLE_DEBUG
             logger.begin();
@@ -323,6 +380,8 @@ void setup()
             logger.end();
         #endif
     #endif
+
+
 }
 
 /**
@@ -394,5 +453,6 @@ void loop()
                 servos[5].writeDegrees(servos[5].getMax());
         }
     #endif
+    HAND_SERIAL.flush();
     processor.try_process();
 }

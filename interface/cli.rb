@@ -204,7 +204,11 @@ cli = HandAPI::CLI.new do |c|
 
     "10 #{joint} #{args[2].to_i}"
   end
-  
+
+  c.add_command "report" do |cli, cmd|
+    "11"
+  end.brief("reports the state of the controller")
+
 end
 
 serial.open do

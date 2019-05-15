@@ -41,6 +41,10 @@
     #ifndef MAX_ACCELERATION
         #define MAX_ACCELERATION 25
     #endif
+
+    #ifndef HARDWARE_SS_PIN
+        #define HARDWARE_SS_PIN PB12
+    #endif
 #endif
 
 #include <servo.h>
