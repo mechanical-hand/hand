@@ -2,13 +2,13 @@
 #include "config.h"
 
 #include <command_processor.h>
-#include <hardware_spi_driver.h>
-#include <software_spi_driver.h>
 
 const size_t servo_count = SERVO_COUNT;
 
-using hand::ps2_button;
-using hand::ps2_analog;
+#ifdef ENABLE_PS_GAMEPAD
+    using hand::ps2_button;
+    using hand::ps2_analog;
+#endif
 
 // Макрос для определения обработчиков команд
 #define COMMAND_HANDLER(name) bool name (Stream& m_input, Print& m_reply)
@@ -276,12 +276,6 @@ COMMAND_HANDLER(joint_handler)
     return multi_write_helper<2>(indices, positions, count, SERVO_SPEED, &m_reply);
 }
 
-#ifdef ENABLE_PS_GAMEPAD
-    //hand::hardware_spi_driver driver(hand::gamepad_settings, GAMEPAD_SS_PIN);
-    hand::software_spi_driver driver(11, 12, 13, 10);
-    hand::ps2_gamepad gamepad(driver, false, false);
-#endif
-
 COMMAND_HANDLER(report_handler)
 {
     m_reply.print("Success: ");
@@ -299,11 +293,8 @@ COMMAND_HANDLER(report_handler)
         m_reply.print(";gamepad_buttons:");
         m_reply.print(gamepad.buttonsState(), BIN);
         m_reply.print(";gamepad_buffer:");
-        for(int i = 0; i < 21; i++)
-        {
-            m_reply.print(gamepad.buffer()[i], HEX);
-            m_reply.print(" ");
-        }
+        gamepad.dumpBuffer(m_reply);
+        m_reply.print(";");
     #else
         m_reply.print("gamepad_support: disabled;");
     #endif

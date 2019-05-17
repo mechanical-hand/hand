@@ -26,10 +26,30 @@
 #endif
 
 #ifdef ENABLE_PS_GAMEPAD
+    #if defined(ENABLE_SOFTWARE_SPI)
+        #include <software_spi_driver.h>
+    #elif !defined(ENABLE_PS2X_SUPPORT)
+        #include <hardware_spi_driver.h>
+    #endif
+
     #include <ps_gamepad.h>
 
     #ifndef GAMEPAD_SS_PIN
         #define GAMEPAD_SS_PIN PA4
+    #endif
+
+    #if defined(ENABLE_SOFTWARE_SPI) || defined(ENABLE_PS2X_SUPPORT)
+        #ifndef GAMEPAD_MISO_PIN
+            #define GAMEPAD_MISO_PIN PA6
+        #endif
+
+        #ifndef GAMEPAD_MOSI_PIN
+            #define GAMEPAD_MOSI_PIN PA7
+        #endif
+
+        #ifndef GAMEPAD_SCK_PIN
+            #define GAMEPAD_SCK_PIN PA5
+        #endif
     #endif
 
     #ifdef ENABLE_MANUAL_CONTROL_SWITCH
@@ -44,6 +64,31 @@
 
     #ifndef HARDWARE_SS_PIN
         #define HARDWARE_SS_PIN PB12
+    #endif
+
+    #ifdef ENABLE_PS2X_SUPPORT
+        hand::ps2x_gamepad gamepad(
+            GAMEPAD_MISO_PIN,
+            GAMEPAD_MOSI_PIN,
+            GAMEPAD_SCK_PIN,
+            GAMEPAD_SS_PIN
+        );
+    #else
+        #ifdef ENABLE_SOFTWARE_SPI
+            hand::software_spi_driver driver(
+                GAMEPAD_MOSI_PIN,
+                GAMEPAD_MISO_PIN,
+                GAMEPAD_SCK_PIN,
+                GAMEPAD_SS_PIN
+            );
+        #else
+            hand::hardware_spi_driver driver(
+                hand::gamepad_settings,
+                GAMEPAD_SS_PIN
+            );
+        #endif
+
+        hand::ps2_gamepad gamepad(driver, false, false);
     #endif
 #endif
 
