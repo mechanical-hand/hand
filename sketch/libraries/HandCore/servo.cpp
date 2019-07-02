@@ -4,45 +4,45 @@
 using namespace hand;
 
 servo::servo(int pin, int initial, int angle) :
-    m_angle(angle),
-    m_initial(initial),
-    m_pin(pin),
-    m_min(-angle/2),
-    m_max(angle/2)
+    m_initial(initial)
 {
     #ifndef INITIALIZE_SERVOS_IN_SETUP
         init();
     #endif
+    this->m_pin = pin;
+    this->m_min = -angle/2;
+    this->m_max = angle/2;
+    this->m_angle = angle;
 }
 
 servo::servo(int pin, int initial, int angle, int min, int max) :
-    m_angle(angle),
-    m_initial(initial),
-    m_pin(pin),
-    m_min(min),
-    m_max(max)
+    m_initial(initial)
 {
     #ifndef INITIALIZE_SERVOS_IN_SETUP
         init();
     #endif
+    this->m_pin = pin;
+    this->m_min = min;
+    this->m_max = max;
+    this->m_angle = angle;
 }
 
 void servo::write(int value)
 {
-    if(m_pin == NO_PIN) return;
+    if(getPin() == NO_PIN) return;
     m_servo.write(value);
 }
 
 void servo::init()
 {
-    if(m_pin == NO_PIN) return;
-    m_servo.attach(m_pin);
+    if(getPin() == NO_PIN) return;
+    m_servo.attach(this->m_pin);
     writeDegrees(m_initial);
 }
 
 int servo::read()
 {
-    if(m_pin == NO_PIN) return 0;
+    if(getPin() == NO_PIN) return 0;
     return m_servo.read();
 }
 
@@ -61,14 +61,14 @@ int servo::readDegrees()
     return map(pwm, 0, 180, -half_angle, half_angle);
 }
 
-int servo::clamp(int value, int min, int max)
+int servo_base::clamp(int value, int min, int max)
 {
     if(value > max) return max;
     if(value < min) return min;
     return value;
 }
 
-int servo::clamp(int value, bool use_restrictions)
+int servo_base::clamp(int value, bool use_restrictions)
 {
     int half = getHalfAngle();
     int min = (use_restrictions ? -half : m_min);
@@ -76,7 +76,7 @@ int servo::clamp(int value, bool use_restrictions)
     return clamp(value, min, max);
 }
 
-int servo::clamp(int value)
+int servo_base::clamp(int value)
 {
     return clamp(value, true);
 }

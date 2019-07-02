@@ -92,17 +92,55 @@
     #endif
 #endif
 
+#ifndef HAND_STEP_PIN
+    #define HAND_STEP_PIN PB1
+#endif
+
+#ifdef ENABLE_POWER_CONTROL
+    #ifndef POWER_CONTROL_PINS
+        #define POWER_CONTROL_PINS PA11, PA12, PA14
+    #endif
+
+    #ifndef POWER_CONTROL_TIMEOUT
+        #define POWER_CONTROL_TIMEOUT 1000
+    #endif
+
+    #if defined(POWER_CONTROL_ENABLED_LEVEL) && POWER_CONTROL_ENABLED_LEVEL == LOW
+        #define POWER_CONTROL_DISABLED_LEVEL HIGH
+    #else
+        #if !defined(POWER_CONTROL_ENABLED_LEVEL)
+            #define POWER_CONTROL_ENABLED_LEVEL HIGH
+        #endif
+
+        #define POWER_CONTROL_DISABLED_LEVEL LOW
+    #endif
+
+#endif
+
 #include <servo.h>
+#include <stepper.h>
+
+hand::dummy_servo servo_dummy;
+hand::stepper_servo servo_rotation(PB10, PB11, 0.1);
+hand::servo servo_first(PA1,    0,  270, -40,   25);
+hand::servo servo_second(PA2,    -40,270, -60,   20);
+hand::servo servo_claw(PA3,    40, 270, 30,    270/2);
 
 // Список машинок
-hand::servo servos[] = {
+hand::servo_base* servos[] = {
     //          пин     нач угол мин    макс
-    hand::servo(PA0,    0,  270), // Поворот
+    /*hand::servo(PA0,    0,  270), // Поворот
     hand::servo(PA1,    0,  270, -40,   25), // 1 сустав
     hand::servo(NO_PIN, 0,  270, -25,   40), // 1 сустав
     hand::servo(PA2,    -40,270, -60,   20), // 2 сустав
     hand::servo(NO_PIN, 40, 270, -20,   60), // 2 сустав
-    hand::servo(PA3,    40, 270, 30,    270/2)  // клешня
+    hand::servo(PA3,    40, 270, 30,    270/2)  // клешня*/
+    &servo_rotation,
+    &servo_first,
+    &servo_dummy,
+    &servo_second,
+    &servo_dummy,
+    &servo_claw
 };
 // Количество машинок
 #define SERVO_COUNT 6
