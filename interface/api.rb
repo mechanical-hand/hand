@@ -47,6 +47,7 @@ module HandAPI
           break if cmd.match(/^Invalid command/)
         end
       end
+      @file.flush
       cmd
     end
 
@@ -58,7 +59,7 @@ module HandAPI
     # @returns Значение, переданное контроллером (например, в ответ на команду чтения) или nil в случае его отсутствия
     def execute(cmd)
       puts "> #{cmd}"
-      cmd = write(cmd).sub("\n", "")
+      cmd = write(cmd).chomp
       puts "< #{cmd}"
       raise cmd unless cmd.start_with?("Success")|| cmd.start_with?("Pong")
       if cmd.match(/Success: \d+/)

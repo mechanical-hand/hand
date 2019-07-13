@@ -1,0 +1,3 @@
+[submodule "sketch/libraries/ps_gamepad"]
+	path = sketch/libraries/ps_gamepad
+	url = https://github.com/mechanical-hand/ps_gamepad

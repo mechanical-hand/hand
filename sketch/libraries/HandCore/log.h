@@ -1,4 +1,5 @@
 #pragma once
+#include <Arduino.h>
 
 namespace hand
 {
@@ -31,6 +32,13 @@ namespace hand
             m_print.print(data);
         }
 
+        template<typename T, typename T1>
+        void print(T data, T1 format)
+        {
+            if(!m_nest_count) return;
+            m_print.print(data, format);
+        }
+
         template<typename T>
         void println(T data)
         {
@@ -50,4 +58,6 @@ namespace hand
     {
         return logger<T>(stream);
     }
+
+    extern logger<HardwareSerial> *logger_instance;
 }

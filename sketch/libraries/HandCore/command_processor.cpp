@@ -11,7 +11,7 @@ command_processor::command_processor(command_handler* h, size_t c, Stream& s, Pr
 
 bool command_processor::process()
 {
-    int cmd = m_stream.parseInt();
+    unsigned int cmd = m_stream.parseInt();
     if(cmd >= m_handlers_count || !m_handlers[cmd])
     {
         if(cmd) m_reply.println("Invalid command");
@@ -22,7 +22,8 @@ bool command_processor::process()
 
 bool command_processor::try_process()
 {
-    if(m_stream.available())
+    static_cast<HardwareSerial&>(m_reply).flush();
+    if(m_stream.available() >= 2)
     {
         return process();
     }
