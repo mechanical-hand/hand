@@ -23,7 +23,7 @@ bool command_processor::process()
 bool command_processor::try_process()
 {
     static_cast<HardwareSerial&>(m_reply).flush();
-    if(m_stream.available())
+    if(m_stream.available() >= 2)
     {
         return process();
     }

@@ -7,7 +7,7 @@
 static int stepPin;
 
 #ifndef HAND_STEP_TIMEOUT
-    #define HAND_STEP_TIMEOUT 50
+    #define HAND_STEP_TIMEOUT 10
 #endif
 
 void hand::stepper_servo::setEnabled(bool b)
@@ -30,6 +30,7 @@ hand::stepper_servo* hand::stepper_servo::process()
 {
     if(m_enabled)
     {
+        setDirection(m_target_position > m_position);
         if(fabs(m_target_position - m_position) < m_step + 0.0001)
             setEnabled(false);
 

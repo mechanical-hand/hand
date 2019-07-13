@@ -308,6 +308,9 @@ COMMAND_HANDLER(report_handler)
         m_reply.print(";");
     }
 
+    m_reply.print("s0tgt:");
+    m_reply.print(servo_rotation.getTarget());
+
     m_reply.println();
     return true;
 }
@@ -400,15 +403,13 @@ hand::command_processor processor(handlers, handlers_count, HAND_SERIAL, HAND_SE
 void loop()
 {
     hand::processSteppers();
+    gamepad.update(0,0);
     #ifdef ENABLE_PS_GAMEPAD
 
         static unsigned long last_millis = millis();
         static unsigned long start_times[3];
         if(manual_mode())
         {
-
-            gamepad.update(0,0);
-
             unsigned long delta_time = millis() - last_millis;
             last_millis = millis();
 
@@ -421,7 +422,6 @@ void loop()
                 rotation += 2 * SERVO_SPEED / 3;
             if(gamepad.button(ps2_button::PSB_R2))
                 rotation -= 2 * SERVO_SPEED / 3;
-
 
             if(gamepad.pressed(
                 ps2_button::PSB_L1 |
@@ -437,16 +437,34 @@ void loop()
                         ps2_button::PSB_L2 |
                         ps2_button::PSB_R2 )
                 )
+                {
                     rotation = map(gamepad.analog(ps2_analog::PSA_LX), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+                    if(abs(rotation) < ROTATION_THRESHOLD)
+                        rotation = 0;
+                }
             #endif
 
-            int max_acceleration = MAX_ACCELERATION * (millis() - start_times[0]) / 1000;
+            /*int max_acceleration = MAX_ACCELERATION * (millis() - start_times[0]) / 1000;
             if(rotation < 0)
                 rotation = max(rotation, -max_acceleration) * delta_time / 1000;
             else
                 rotation = min(rotation, max_acceleration) * delta_time / 1000;
 
-            servos[0]->writeDegrees(servos[0]->readDegrees() + rotation);
+            if(rotation)
+                servos[0]->writeDegrees(servos[0]->readDegrees() + rotation);*/
+
+            float last_rd = servos[0]->readDegrees();
+            float new_rd = last_rd;
+            if(gamepad.button(ps2_button::PSB_R1))
+                new_rd += SERVO_SPEED * delta_time / 5;
+            if(gamepad.button(ps2_button::PSB_R2))
+                new_rd += SERVO_SPEED + delta_time / 3;
+            if(gamepad.button(ps2_button::PSB_L1))
+                new_rd -= SERVO_SPEED * delta_time / 5;
+            if(gamepad.button(ps2_button::PSB_L2))
+                new_rd -= SERVO_SPEED * delta_time / 3;
+
+            servos[0]->writeDegrees(new_rd);
 
             int joint_1 = map(gamepad.analog(ps2_analog::PSA_LY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
             servos[1]->writeDegrees(servos[1]->readDegrees() + joint_1 * delta_time / 1000);

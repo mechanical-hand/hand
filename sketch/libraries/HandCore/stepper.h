@@ -16,6 +16,7 @@ namespace hand
         int read();
         int readDegrees();
         void init();
+        float getTarget(){ return m_target_position; }
 
     private:
         int m_enable_pin, m_direction_pin, m_step_pin;

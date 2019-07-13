@@ -35,7 +35,7 @@
     #include <ps_gamepad.h>
 
     #ifndef GAMEPAD_SS_PIN
-        #define GAMEPAD_SS_PIN PA4
+        #define GAMEPAD_SS_PIN PB0
     #endif
 
     #if defined(ENABLE_SOFTWARE_SPI) || defined(ENABLE_PS2X_SUPPORT)
@@ -90,15 +90,19 @@
 
         hand::ps2_gamepad gamepad(driver, false, false);
     #endif
+
+    #ifndef ROTATION_THRESHOLD
+        #define ROTATION_THRESHOLD 20
+    #endif
 #endif
 
 #ifndef HAND_STEP_PIN
-    #define HAND_STEP_PIN PB1
+    #define HAND_STEP_PIN PB11
 #endif
 
 #ifdef ENABLE_POWER_CONTROL
     #ifndef POWER_CONTROL_PINS
-        #define POWER_CONTROL_PINS PA11, PA12, PA14
+        #define POWER_CONTROL_PINS PB12,PB13,PB14
     #endif
 
     #ifndef POWER_CONTROL_TIMEOUT
@@ -121,7 +125,7 @@
 #include <stepper.h>
 
 hand::dummy_servo servo_dummy;
-hand::stepper_servo servo_rotation(PB10, PB11, 0.1);
+hand::stepper_servo servo_rotation(PB1, PB10, 10);
 hand::servo servo_first(PA1,    0,  270, -40,   25);
 hand::servo servo_second(PA2,    -40,270, -60,   20);
 hand::servo servo_claw(PA3,    40, 270, 30,    270/2);
