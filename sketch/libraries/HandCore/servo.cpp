@@ -6,25 +6,25 @@ using namespace hand;
 servo::servo(int pin, int initial, int angle) :
     m_initial(initial)
 {
-    #ifndef INITIALIZE_SERVOS_IN_SETUP
-        init();
-    #endif
     this->m_pin = pin;
     this->m_min = -angle/2;
     this->m_max = angle/2;
     this->m_angle = angle;
+    #ifndef INITIALIZE_SERVOS_IN_SETUP
+        init();
+    #endif
 }
 
 servo::servo(int pin, int initial, int angle, int min, int max) :
     m_initial(initial)
 {
-    #ifndef INITIALIZE_SERVOS_IN_SETUP
-        init();
-    #endif
     this->m_pin = pin;
     this->m_min = min;
     this->m_max = max;
     this->m_angle = angle;
+    #ifndef INITIALIZE_SERVOS_IN_SETUP
+        init();
+    #endif
 }
 
 void servo::write(int value)
