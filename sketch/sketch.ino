@@ -467,12 +467,12 @@ void loop()
             servos[0]->writeDegrees(new_rd);
 
             int joint_1 = map(gamepad.analog(ps2_analog::PSA_LY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
-            servos[1]->writeDegrees(servos[1]->readDegrees() + joint_1 * delta_time / 1000);
-            servos[2]->writeDegrees(servos[2]->readDegrees() - joint_1 * delta_time / 1000);
+            servos[1]->writeDegrees(servos[1]->readDegrees() + joint_1 * delta_time / 100);
+            servos[2]->writeDegrees(servos[2]->readDegrees() - joint_1 * delta_time / 100);
 
             int joint_2 = map(gamepad.analog(ps2_analog::PSA_RY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
-            servos[3]->writeDegrees(servos[3]->readDegrees() + joint_2 * delta_time / 1000);
-            servos[4]->writeDegrees(servos[4]->readDegrees() - joint_2 * delta_time / 1000);
+            servos[3]->writeDegrees(servos[3]->readDegrees() + joint_2 * delta_time / 100);
+            servos[4]->writeDegrees(servos[4]->readDegrees() - joint_2 * delta_time / 100);
 
             if(gamepad.button(ps2_button::PSB_CIRCLE))
                 servos[5]->writeDegrees(servos[5]->getMin());
