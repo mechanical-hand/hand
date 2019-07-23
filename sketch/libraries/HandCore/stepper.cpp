@@ -7,7 +7,7 @@
 static int stepPin;
 
 #ifndef HAND_STEP_TIMEOUT
-    #define HAND_STEP_TIMEOUT 10
+    #define HAND_STEP_TIMEOUT 20
 #endif
 
 void hand::stepper_servo::setEnabled(bool b)
