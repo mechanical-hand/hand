@@ -97,7 +97,7 @@
 #endif
 
 #ifndef HAND_STEP_PIN
-    #define HAND_STEP_PIN PB11
+    #define HAND_STEP_PIN PB1
 #endif
 
 #ifdef ENABLE_POWER_CONTROL
@@ -125,7 +125,7 @@
 #include <stepper.h>
 
 hand::dummy_servo servo_dummy;
-hand::stepper_servo servo_rotation(PB1, PB10, 10);
+hand::stepper_servo servo_rotation(PB11, PB10, 10);
 hand::servo servo_first(PA1,    0,  270, -40,   25);
 hand::servo servo_second(PA2,    -40,270, -60,   20);
 hand::servo servo_claw(PA3,    40, 270, 30,    270/2);
