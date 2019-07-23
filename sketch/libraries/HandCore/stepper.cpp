@@ -7,7 +7,7 @@
 static int stepPin;
 
 #ifndef HAND_STEP_TIMEOUT
-    #define HAND_STEP_TIMEOUT 20
+    #define HAND_STEP_TIMEOUT 10
 #endif
 
 void hand::stepper_servo::setEnabled(bool b)
@@ -41,6 +41,7 @@ hand::stepper_servo* hand::stepper_servo::process()
             digitalWrite(m_enable_pin, HIGH);
             delay(HAND_STEP_TIMEOUT);
             digitalWrite(m_enable_pin, LOW);
+            delay(HAND_STEP_TIMEOUT);
         #endif
     }
     return m_next_stepper;
@@ -62,11 +63,7 @@ void hand::setStepPin(int pin)
 {
     stepPin = pin;
     pinMode(pin, OUTPUT);
-    #ifdef INVERTED_STEPPER_ENABLE
-        digitalWrite(pin, HIGH);
-    #else
-        digitalWrite(pin, LOW);
-    #endif
+    digitalWrite(pin, LOW);
 }
 
 int hand::getStepPin()
