@@ -403,9 +403,9 @@ hand::command_processor processor(handlers, handlers_count, HAND_SERIAL, HAND_SE
 void loop()
 {
     hand::processSteppers();
-    gamepad.update(0,0);
-    #ifdef ENABLE_PS_GAMEPAD
 
+    #ifdef ENABLE_PS_GAMEPAD
+        gamepad.update(0,0);
         static unsigned long last_millis = millis();
         static unsigned long start_times[3];
         if(manual_mode())
@@ -457,12 +457,8 @@ void loop()
             float new_rd = last_rd;
             if(gamepad.button(ps2_button::PSB_R1))
                 new_rd += SERVO_SPEED * delta_time / 5;
-            if(gamepad.button(ps2_button::PSB_R2))
-                new_rd += SERVO_SPEED + delta_time / 3;
             if(gamepad.button(ps2_button::PSB_L1))
                 new_rd -= SERVO_SPEED * delta_time / 5;
-            if(gamepad.button(ps2_button::PSB_L2))
-                new_rd -= SERVO_SPEED * delta_time / 3;
 
             servos[0]->writeDegrees(new_rd);
 
