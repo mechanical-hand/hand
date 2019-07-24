@@ -407,11 +407,10 @@ void loop()
     #ifdef ENABLE_PS_GAMEPAD
         gamepad.update(0,0);
         static unsigned long last_millis = millis();
-
+        last_millis = millis();
         if(manual_mode())
         {
             unsigned long delta_time = millis() - last_millis;
-            last_millis = millis();
 
             if(gamepad.button(ps2_button::PSB_L1 | ps2_button::PSB_R1))
             {
@@ -429,11 +428,11 @@ void loop()
                 servo_rotation.setDirection(false);
 
             int joint_1 = map(gamepad.analog(ps2_analog::PSA_LY), 0, 255, servos[1]->getMin(), servos[1]->getMax());
-            servos[1]->writeDegrees(joint_1);
+            servos[1]->writeDegrees(servos[1]->readDegrees() + delta_time * joint_1 / 1000);
 
             int joint_2 = map(gamepad.analog(ps2_analog::PSA_RY), 0, 255, servos[3]->getMin(), servos[3]->getMax());
-            servos[3]->writeDegrees(joint_2);
-            
+            servos[3]->writeDegrees(servos[3]->readDegrees() + delta_time * joint_2 / 1000);
+
             if(gamepad.button(ps2_button::PSB_L2))
                 servos[5]->writeDegrees(servos[5]->getMin());
             if(gamepad.button(ps2_button::PSB_R2))
