@@ -40,7 +40,8 @@ hand::stepper_servo* hand::stepper_servo::process()
 
     if(m_enabled)
     {
-        setDirection(m_target_position > m_position);
+        if(!m_manual)
+            setDirection(m_target_position > m_position);
 
         m_position += m_step * (m_direction ? 1 : -1);
         #ifdef TREAT_ENABLE_AS_STEP_PIN
