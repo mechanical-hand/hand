@@ -12,6 +12,7 @@ static int stepPin;
 
 void hand::stepper_servo::setEnabled(bool b)
 {
+    m_enabled = b;
     #ifndef TREAT_ENABLE_AS_STEP_PIN
         #ifdef INVERTED_STEPPER_ENABLE
             digitalWrite(m_enable_pin, b ? LOW : HIGH);
@@ -19,7 +20,6 @@ void hand::stepper_servo::setEnabled(bool b)
             digitalWrite(m_enable_pin, b ? HIGH : LOW);
         #endif
     #endif
-    m_enabled = b;
 }
 
 void hand::stepper_servo::setDirection(bool b)
@@ -53,6 +53,7 @@ void hand::processSteppers()
     if(!s) return;
     while(s = s->process());
     #ifndef TREAT_ENABLE_AS_STEP_PIN
+        #error Please use TREAT_ENABLE_AS_STEP_PIN
         digitalWrite(stepPin, HIGH);
         delay(HAND_STEP_TIMEOUT);
         digitalWrite(stepPin, LOW);
@@ -76,7 +77,8 @@ hand::stepper_servo::stepper_servo(int e, int d, float step) :
     m_direction_pin(d),
     m_step(step),
     m_position(0.0),
-    m_target_position(0.0)
+    m_target_position(0.0),
+    m_enabled(false)
 {
     #ifndef INITIALIZE_SERVOS_IN_SETUP
         init();
