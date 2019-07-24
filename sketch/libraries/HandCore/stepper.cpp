@@ -2,7 +2,7 @@
 #include <math.h>
 #include <log.h>
 #include <Arduino.h>
-
+#undef round
 
 static int stepPin;
 
@@ -28,13 +28,19 @@ void hand::stepper_servo::setDirection(bool b)
     m_direction = b;
 }
 
+void hand::stepper_servo::setManual(bool b)
+{
+    m_manual = b;
+}
+
 hand::stepper_servo* hand::stepper_servo::process()
 {
+    if(m_enabled && fabs(m_target_position - m_position) < m_step + 0.0001 && !m_manual)
+        setEnabled(false);
+
     if(m_enabled)
     {
         setDirection(m_target_position > m_position);
-        if(fabs(m_target_position - m_position) < m_step + 0.0001)
-            setEnabled(false);
 
         m_position += m_step * (m_direction ? 1 : -1);
         #ifdef TREAT_ENABLE_AS_STEP_PIN
@@ -97,6 +103,7 @@ void hand::stepper_servo::write(int degrees)
 {
     m_target_position = degrees;
     setEnabled(true);
+    setManual(false);
 }
 
 bool hand::stepper_servo::writeDegrees(int d)
@@ -105,12 +112,12 @@ bool hand::stepper_servo::writeDegrees(int d)
     return true;
 }
 
-int hand::stepper_servo::read()
+signed int hand::stepper_servo::read()
 {
     return round(m_position);
 }
 
-int hand::stepper_servo::readDegrees()
+signed int hand::stepper_servo::readDegrees()
 {
     return read();
 }

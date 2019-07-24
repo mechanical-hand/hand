@@ -20,14 +20,16 @@ namespace hand
 
     private:
         int m_enable_pin, m_direction_pin, m_step_pin;
-        bool m_direction, m_enabled;
+        bool m_direction, m_enabled, m_manual;
         float m_position, m_target_position, m_step;
 
         stepper_servo *m_next_stepper;
 
         stepper_servo *process();
+    public:
         void setEnabled(bool);
         void setDirection(bool);
+        void setManual(bool);
     };
 
     extern stepper_servo *first_stepper;

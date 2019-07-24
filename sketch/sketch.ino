@@ -407,60 +407,26 @@ void loop()
     #ifdef ENABLE_PS_GAMEPAD
         gamepad.update(0,0);
         static unsigned long last_millis = millis();
-        static unsigned long start_times[3];
+
         if(manual_mode())
         {
             unsigned long delta_time = millis() - last_millis;
             last_millis = millis();
 
-            int rotation = 0;
-            if(gamepad.button(ps2_button::PSB_L1))
-                rotation += SERVO_SPEED / 3;
-            if(gamepad.button(ps2_button::PSB_R1))
-                rotation -= SERVO_SPEED / 3;
-            if(gamepad.button(ps2_button::PSB_L2))
-                rotation += 2 * SERVO_SPEED / 3;
-            if(gamepad.button(ps2_button::PSB_R2))
-                rotation -= 2 * SERVO_SPEED / 3;
-
-            if(gamepad.pressed(
-                ps2_button::PSB_L1 |
-                ps2_button::PSB_R1 |
-                ps2_button::PSB_L2 |
-                ps2_button::PSB_R2 ))
-                start_times[0] = millis();
-            #ifdef ENABLE_ANALOG_ROTATION
-                if(
-                    !gamepad.button(
-                        ps2_button::PSB_L1 |
-                        ps2_button::PSB_R1 |
-                        ps2_button::PSB_L2 |
-                        ps2_button::PSB_R2 )
-                )
-                {
-                    rotation = map(gamepad.analog(ps2_analog::PSA_LX), 0, 255, -SERVO_SPEED, SERVO_SPEED);
-                    if(abs(rotation) < ROTATION_THRESHOLD)
-                        rotation = 0;
-                }
-            #endif
-
-            /*int max_acceleration = MAX_ACCELERATION * (millis() - start_times[0]) / 1000;
-            if(rotation < 0)
-                rotation = max(rotation, -max_acceleration) * delta_time / 1000;
+            if(gamepad.button(ps2_button::PSB_L1 | ps2_button::PSB_R1))
+            {
+                servo_rotation.setManual(true);
+                servo_rotation.setEnabled(true);
+            }
             else
-                rotation = min(rotation, max_acceleration) * delta_time / 1000;
+            {
+                servo_rotation.setEnabled(false);
+            }
 
-            if(rotation)
-                servos[0]->writeDegrees(servos[0]->readDegrees() + rotation);*/
-
-            float last_rd = servos[0]->readDegrees();
-            float new_rd = last_rd;
-            if(gamepad.button(ps2_button::PSB_R1))
-                new_rd += SERVO_SPEED * delta_time / 5;
             if(gamepad.button(ps2_button::PSB_L1))
-                new_rd -= SERVO_SPEED * delta_time / 5;
-
-            servos[0]->writeDegrees(new_rd);
+                servo_rotation.setDirection(true);
+            else
+                servo_rotation.setDirection(false);
 
             int s1 = gamepad.analog(ps2_analog::PSA_LY);
             if(abs(s1 - 128) >= ROTATION_THRESHOLD)
@@ -485,9 +451,9 @@ void loop()
                 servos[3]->writeDegrees(servos[3]->readDegrees() + rotation);
             }
 
-            if(gamepad.button(ps2_button::PSB_CIRCLE))
+            if(gamepad.button(ps2_button::PSB_L2))
                 servos[5]->writeDegrees(servos[5]->getMin());
-            if(gamepad.button(ps2_button::PSB_CROSS))
+            if(gamepad.button(ps2_button::PSB_R2))
                 servos[5]->writeDegrees(servos[5]->getMax());
         }
     #endif
