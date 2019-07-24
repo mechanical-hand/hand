@@ -35,7 +35,7 @@
     #include <ps_gamepad.h>
 
     #ifndef GAMEPAD_SS_PIN
-        #define GAMEPAD_SS_PIN PB0
+        #define GAMEPAD_SS_PIN PA4
     #endif
 
     #if defined(ENABLE_SOFTWARE_SPI) || defined(ENABLE_PS2X_SUPPORT)
