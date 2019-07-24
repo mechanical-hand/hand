@@ -11,4 +11,4 @@ install:
   - platformio lib install 883
 
 script:
-  - platformio run -e bluepill -e uno
+  - platformio run -e bluepill
