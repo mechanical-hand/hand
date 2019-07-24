@@ -428,36 +428,19 @@ void loop()
             else
                 servo_rotation.setDirection(false);
 
-            int s1 = gamepad.analog(ps2_analog::PSA_LY);
-            if(abs(s1 - 128) >= ROTATION_THRESHOLD)
-            {
-                int joint_1 = map(s1, 0, 255, -SERVO_SPEED, SERVO_SPEED);
-                int rotation = joint_1 * delta_time / 1000;
-                if(abs(rotation) < SERVO_EPSILON) rotation = (s1 > 127 ? SERVO_EPSILON : - SERVO_EPSILON);
-                servos[1]->writeDegrees(rotation);
-            }
-            //servos[2]->writeDegrees(servos[2]->readDegrees() - joint_1 * delta_time / 100);
+            int joint_1 = map(gamepad.analog(ps2_analog::PSA_LY), 0, 255, servos[1]->getMin(), servos[1]->getMax());
+            servos[1]->writeDegrees(joint_1);
 
-            //int joint_2 = map(gamepad.analog(ps2_analog::PSA_RY), 0, 255, servos[3]->getMin(), servos[3]->getMax());
-            //servos[3]->writeDegrees(joint_2);
-            //servos[4]->writeDegrees(servos[4]->readDegrees() - joint_2 * delta_time / 100);
-
-            int s2 = gamepad.analog(ps2_analog::PSA_RY);
-            if(abs(s2 - 128) >= ROTATION_THRESHOLD)
-            {
-                int joint_2 = map(s2, 0, 255, -SERVO_SPEED, SERVO_SPEED);
-                int rotation = joint_2 * delta_time / 1000;
-                if(abs(rotation) < SERVO_EPSILON) rotation = (s2 > 127 ? SERVO_EPSILON : - SERVO_EPSILON);
-                servos[3]->writeDegrees(servos[3]->readDegrees() + rotation);
-            }
-
+            int joint_2 = map(gamepad.analog(ps2_analog::PSA_RY), 0, 255, servos[3]->getMin(), servos[3]->getMax());
+            servos[3]->writeDegrees(joint_2);
+            
             if(gamepad.button(ps2_button::PSB_L2))
                 servos[5]->writeDegrees(servos[5]->getMin());
             if(gamepad.button(ps2_button::PSB_R2))
                 servos[5]->writeDegrees(servos[5]->getMax());
         }
     #endif
-    
+
     #ifndef DISABLE_SERIAL_COMMANDS
         HAND_SERIAL.flush();
         processor.try_process();
