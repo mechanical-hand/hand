@@ -457,6 +457,9 @@ void loop()
                 servos[5]->writeDegrees(servos[5]->getMax());
         }
     #endif
-    HAND_SERIAL.flush();
-    processor.try_process();
+    
+    #ifndef DISABLE_SERIAL_COMMANDS
+        HAND_SERIAL.flush();
+        processor.try_process();
+    #endif
 }
