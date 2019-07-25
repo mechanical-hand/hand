@@ -427,11 +427,35 @@ void loop()
             else
                 servo_rotation.setDirection(false);
 
-            int joint_1 = map((signed)gamepad.analog(ps2_analog::PSA_LY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
-            servos[1]->writeDegrees((signed)servos[1]->readDegrees() + delta_time * joint_1 / 1000);
+            #ifdef USE_VELOCITY_CONTROLS
+                int joint_1 = map((signed)gamepad.analog(ps2_analog::PSA_LY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+                servos[1]->writeDegrees((signed)servos[1]->readDegrees() + delta_time * joint_1 / 1000);
 
-            int joint_2 = map((signed)gamepad.analog(ps2_analog::PSA_RY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
-            servos[3]->writeDegrees((signed)servos[3]->readDegrees() + delta_time * joint_2 / 1000);
+                int joint_2 = map((signed)gamepad.analog(ps2_analog::PSA_RY), 0, 255, -SERVO_SPEED, SERVO_SPEED);
+                servos[3]->writeDegrees((signed)servos[3]->readDegrees() + delta_time * joint_2 / 1000);
+
+            #else
+                servos[1]->writeDegrees(
+                    map(
+                        (signed)gamepad.analog(ps2_analog::PSA_LY), 
+                        0,
+                        255,
+                        servos[1]->getMin(),
+                        servos[1]->getMax()
+                    )
+                );
+
+
+                servos[3]->writeDegrees(
+                    map(
+                        (signed)gamepad.analog(ps2_analog::PSA_RY),
+                        0,
+                        255,
+                        servos[3]->getMin(),
+                        servos[3]->getMax()
+                    )
+                );
+            #endif
 
             if(gamepad.button(ps2_button::PSB_L2))
                 servos[5]->writeDegrees(servos[5]->getMin());
