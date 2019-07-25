@@ -48,7 +48,7 @@ hand::stepper_servo* hand::stepper_servo::process()
             digitalWrite(m_enable_pin, HIGH);
             delay(HAND_STEP_TIMEOUT);
             digitalWrite(m_enable_pin, LOW);
-            delay(HAND_STEP_TIMEOUT);
+            //delay(HAND_STEP_TIMEOUT);
         #endif
     }
     return m_next_stepper;
